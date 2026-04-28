@@ -276,15 +276,26 @@ export default function DocumentDetailPage({ id }: { id: number }) {
                 <DataRow label="Total HT" value={`${formatMoney(doc.totalHt)} F`} />
                 <DataRow label="Remise" value={`${formatMoney(doc.totalRemise)} F`} />
                 <DataRow
-                  label={doc.applyTva ? "TVA 18%" : "TVA"}
+                  label={
+                    doc.tvaPourMemoire
+                      ? "TVA 18% (pour mémoire)"
+                      : doc.applyTva
+                      ? "TVA 18%"
+                      : "TVA"
+                  }
                   value={`${formatMoney(doc.totalTva)} F`}
                 />
                 <div className="pt-2 border-t border-border">
                   <div className="flex items-center justify-between font-bold text-base">
-                    <span>Total TTC</span>
+                    <span>Net à payer</span>
                     <span className="tabular-nums">{formatMoney(doc.totalTtc)} F</span>
                   </div>
                 </div>
+                {doc.tvaPourMemoire && (
+                  <p className="text-xs text-muted-foreground italic pt-1">
+                    TVA pour mémoire — non incluse dans le net à payer.
+                  </p>
+                )}
                 {doc.status === "paye" && (
                   <p className="flex items-center gap-2 text-green-700 dark:text-green-400 text-sm pt-2">
                     <Check className="w-4 h-4" /> Facture acquittée

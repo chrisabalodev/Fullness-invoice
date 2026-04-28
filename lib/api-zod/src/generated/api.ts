@@ -226,7 +226,9 @@ export const DeleteArticleParams = zod.object({
  * @summary Lister tous les documents (factures, devis, bons de livraison)
  */
 export const ListDocumentsQueryParams = zod.object({
-  type: zod.enum(["facture", "devis", "bon_livraison"]).optional(),
+  type: zod
+    .enum(["facture", "devis", "bon_livraison", "facture_proforma", "avoir"])
+    .optional(),
   status: zod
     .enum(["brouillon", "valide", "livre", "paye", "annule"])
     .optional(),
@@ -236,7 +238,13 @@ export const ListDocumentsQueryParams = zod.object({
 
 export const ListDocumentsResponseItem = zod.object({
   id: zod.number(),
-  type: zod.enum(["facture", "devis", "bon_livraison"]),
+  type: zod.enum([
+    "facture",
+    "devis",
+    "bon_livraison",
+    "facture_proforma",
+    "avoir",
+  ]),
   numero: zod.string(),
   status: zod.enum(["brouillon", "valide", "livre", "paye", "annule"]),
   date: zod.coerce.date(),
@@ -252,7 +260,13 @@ export const ListDocumentsResponse = zod.array(ListDocumentsResponseItem);
  * @summary Créer un nouveau document
  */
 export const CreateDocumentBody = zod.object({
-  type: zod.enum(["facture", "devis", "bon_livraison"]),
+  type: zod.enum([
+    "facture",
+    "devis",
+    "bon_livraison",
+    "facture_proforma",
+    "avoir",
+  ]),
   date: zod.coerce.date(),
   echeance: zod.coerce.date().nullish(),
   clientId: zod.number(),
@@ -260,6 +274,7 @@ export const CreateDocumentBody = zod.object({
   reference: zod.string().nullish(),
   notes: zod.string().nullish(),
   applyTva: zod.boolean(),
+  tvaPourMemoire: zod.boolean().optional(),
   status: zod.enum(["brouillon", "valide", "livre", "paye", "annule"]),
   lines: zod.array(
     zod.object({
@@ -281,7 +296,13 @@ export const GetDocumentParams = zod.object({
 
 export const GetDocumentResponse = zod.object({
   id: zod.number(),
-  type: zod.enum(["facture", "devis", "bon_livraison"]),
+  type: zod.enum([
+    "facture",
+    "devis",
+    "bon_livraison",
+    "facture_proforma",
+    "avoir",
+  ]),
   numero: zod.string(),
   status: zod.enum(["brouillon", "valide", "livre", "paye", "annule"]),
   date: zod.coerce.date(),
@@ -321,6 +342,7 @@ export const GetDocumentResponse = zod.object({
   totalTva: zod.number(),
   totalTtc: zod.number(),
   applyTva: zod.boolean(),
+  tvaPourMemoire: zod.boolean(),
   relatedDocumentId: zod.number().nullish(),
   createdAt: zod.coerce.date(),
 });
@@ -330,7 +352,13 @@ export const UpdateDocumentParams = zod.object({
 });
 
 export const UpdateDocumentBody = zod.object({
-  type: zod.enum(["facture", "devis", "bon_livraison"]),
+  type: zod.enum([
+    "facture",
+    "devis",
+    "bon_livraison",
+    "facture_proforma",
+    "avoir",
+  ]),
   date: zod.coerce.date(),
   echeance: zod.coerce.date().nullish(),
   clientId: zod.number(),
@@ -338,6 +366,7 @@ export const UpdateDocumentBody = zod.object({
   reference: zod.string().nullish(),
   notes: zod.string().nullish(),
   applyTva: zod.boolean(),
+  tvaPourMemoire: zod.boolean().optional(),
   status: zod.enum(["brouillon", "valide", "livre", "paye", "annule"]),
   lines: zod.array(
     zod.object({
@@ -355,7 +384,13 @@ export const UpdateDocumentBody = zod.object({
 
 export const UpdateDocumentResponse = zod.object({
   id: zod.number(),
-  type: zod.enum(["facture", "devis", "bon_livraison"]),
+  type: zod.enum([
+    "facture",
+    "devis",
+    "bon_livraison",
+    "facture_proforma",
+    "avoir",
+  ]),
   numero: zod.string(),
   status: zod.enum(["brouillon", "valide", "livre", "paye", "annule"]),
   date: zod.coerce.date(),
@@ -395,6 +430,7 @@ export const UpdateDocumentResponse = zod.object({
   totalTva: zod.number(),
   totalTtc: zod.number(),
   applyTva: zod.boolean(),
+  tvaPourMemoire: zod.boolean(),
   relatedDocumentId: zod.number().nullish(),
   createdAt: zod.coerce.date(),
 });
@@ -416,7 +452,13 @@ export const UpdateDocumentStatusBody = zod.object({
 
 export const UpdateDocumentStatusResponse = zod.object({
   id: zod.number(),
-  type: zod.enum(["facture", "devis", "bon_livraison"]),
+  type: zod.enum([
+    "facture",
+    "devis",
+    "bon_livraison",
+    "facture_proforma",
+    "avoir",
+  ]),
   numero: zod.string(),
   status: zod.enum(["brouillon", "valide", "livre", "paye", "annule"]),
   date: zod.coerce.date(),
@@ -456,6 +498,7 @@ export const UpdateDocumentStatusResponse = zod.object({
   totalTva: zod.number(),
   totalTtc: zod.number(),
   applyTva: zod.boolean(),
+  tvaPourMemoire: zod.boolean(),
   relatedDocumentId: zod.number().nullish(),
   createdAt: zod.coerce.date(),
 });
@@ -468,7 +511,13 @@ export const ConvertDocumentParams = zod.object({
 });
 
 export const ConvertDocumentBody = zod.object({
-  targetType: zod.enum(["facture", "devis", "bon_livraison"]),
+  targetType: zod.enum([
+    "facture",
+    "devis",
+    "bon_livraison",
+    "facture_proforma",
+    "avoir",
+  ]),
 });
 
 /**
@@ -496,7 +545,13 @@ export const GetRecentDocumentsQueryParams = zod.object({
 
 export const GetRecentDocumentsResponseItem = zod.object({
   id: zod.number(),
-  type: zod.enum(["facture", "devis", "bon_livraison"]),
+  type: zod.enum([
+    "facture",
+    "devis",
+    "bon_livraison",
+    "facture_proforma",
+    "avoir",
+  ]),
   numero: zod.string(),
   status: zod.enum(["brouillon", "valide", "livre", "paye", "annule"]),
   date: zod.coerce.date(),

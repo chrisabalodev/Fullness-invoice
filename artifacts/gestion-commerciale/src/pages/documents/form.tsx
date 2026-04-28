@@ -7,13 +7,16 @@ import {
   useUpdateDocument,
   useGetDocument,
   useGetCompany,
+  useCreateClient,
   getListDocumentsQueryKey,
   getGetDocumentQueryKey,
+  getListClientsQueryKey,
   type Article,
   type CreateDocumentBody,
+  type CreateClientBody,
 } from "@workspace/api-client-react";
 import { toast } from "sonner";
-import { Plus, Trash2, ArrowLeft, Save } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Save, UserPlus } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,9 +39,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ClientCombobox } from "@/components/client-combobox";
 import { ArticleCombobox } from "@/components/article-combobox";
-import { formatMoney, todayIso } from "@/lib/format";
+import { formatMoney, todayIso, STATUS_OPTIONS_BY_TYPE, DOCUMENT_STATUS_LABEL } from "@/lib/format";
+
+type DocumentType = "facture" | "devis" | "bon_livraison" | "facture_proforma" | "avoir";
+type DocumentStatus = "brouillon" | "valide" | "paye" | "livre" | "annule";
 
 interface LineFormValues {
   articleId?: number | null;
@@ -52,8 +66,8 @@ interface LineFormValues {
 }
 
 interface DocumentFormValues {
-  type: "facture" | "devis" | "bon_livraison";
-  status: "brouillon" | "valide" | "paye" | "livre" | "annule";
+  type: DocumentType;
+  status: DocumentStatus;
   date: string;
   echeance?: string | null;
   clientId?: number;
@@ -61,7 +75,17 @@ interface DocumentFormValues {
   reference?: string | null;
   notes?: string | null;
   applyTva: boolean;
+  tvaPourMemoire: boolean;
   lines: LineFormValues[];
+}
+
+interface QuickClientValues {
+  name: string;
+  contactName?: string;
+  phone?: string;
+  city?: string;
+  address?: string;
+  fiscalNumber?: string;
 }
 
 function emptyLine(): LineFormValues {
@@ -82,25 +106,26 @@ export default function DocumentFormPage({ id }: { id?: number }) {
   const qc = useQueryClient();
   const { data: company } = useGetCompany();
   const tvaRate = company?.tvaRate ?? 18;
+  const [clientDialogOpen, setClientDialogOpen] = useState(false);
 
   const editing = id != null;
-  const { data: existing } = useGetDocument(id ?? 0, {
-    query: { enabled: editing },
-  });
+  const { data: existing } = useGetDocument(id ?? 0);
 
-  const { register, handleSubmit, control, watch, reset, setValue, formState } = useForm<DocumentFormValues>({
-    defaultValues: {
-      type: "facture",
-      status: "brouillon",
-      date: todayIso(),
-      echeance: null,
-      vendeur: "",
-      reference: "",
-      notes: "",
-      applyTva: true,
-      lines: [emptyLine()],
-    },
-  });
+  const { register, handleSubmit, control, watch, reset, setValue, formState } =
+    useForm<DocumentFormValues>({
+      defaultValues: {
+        type: "facture",
+        status: "brouillon",
+        date: todayIso(),
+        echeance: null,
+        vendeur: "",
+        reference: "",
+        notes: "",
+        applyTva: true,
+        tvaPourMemoire: false,
+        lines: [emptyLine()],
+      },
+    });
 
   const { fields, append, remove } = useFieldArray({ control, name: "lines" });
 
@@ -116,24 +141,27 @@ export default function DocumentFormPage({ id }: { id?: number }) {
         reference: existing.reference ?? "",
         notes: existing.notes ?? "",
         applyTva: existing.applyTva,
-        lines: existing.lines.length > 0
-          ? existing.lines.map((l) => ({
-              articleId: l.articleId ?? null,
-              reference: l.reference,
-              designation: l.designation,
-              quantite: l.quantite,
-              unite: l.unite,
-              prixUnitaire: l.prixUnitaire,
-              remisePct: l.remisePct,
-              depot: l.depot ?? null,
-            }))
-          : [emptyLine()],
+        tvaPourMemoire: existing.tvaPourMemoire ?? false,
+        lines:
+          existing.lines.length > 0
+            ? existing.lines.map((l) => ({
+                articleId: l.articleId ?? null,
+                reference: l.reference,
+                designation: l.designation,
+                quantite: l.quantite,
+                unite: l.unite,
+                prixUnitaire: l.prixUnitaire,
+                remisePct: l.remisePct,
+                depot: l.depot ?? null,
+              }))
+            : [emptyLine()],
       });
     }
   }, [editing, existing, reset]);
 
   const watchedLines = watch("lines");
   const watchedApplyTva = watch("applyTva");
+  const watchedMemoire = watch("tvaPourMemoire");
   const watchedType = watch("type");
 
   const totals = useMemo(() => {
@@ -149,9 +177,9 @@ export default function DocumentFormPage({ id }: { id?: number }) {
       totalRemise += remise;
     }
     const totalTva = watchedApplyTva ? totalHt * (tvaRate / 100) : 0;
-    const totalTtc = totalHt + totalTva;
+    const totalTtc = watchedMemoire ? totalHt : totalHt + totalTva;
     return { totalHt, totalRemise, totalTva, totalTtc };
-  }, [watchedLines, watchedApplyTva, tvaRate]);
+  }, [watchedLines, watchedApplyTva, watchedMemoire, tvaRate]);
 
   const create = useCreateDocument({
     mutation: {
@@ -175,6 +203,18 @@ export default function DocumentFormPage({ id }: { id?: number }) {
     },
   });
 
+  const createClient = useCreateClient({
+    mutation: {
+      onSuccess: (c) => {
+        toast.success("Client créé");
+        qc.invalidateQueries({ queryKey: getListClientsQueryKey() });
+        setValue("clientId", c.id, { shouldValidate: true });
+        setClientDialogOpen(false);
+      },
+      onError: () => toast.error("Erreur lors de la création du client"),
+    },
+  });
+
   const onSubmit = (v: DocumentFormValues) => {
     if (!v.clientId) {
       toast.error("Veuillez choisir un client");
@@ -194,6 +234,7 @@ export default function DocumentFormPage({ id }: { id?: number }) {
       reference: v.reference || null,
       notes: v.notes || null,
       applyTva: v.applyTva,
+      tvaPourMemoire: v.tvaPourMemoire,
       lines: v.lines
         .filter((l) => l.designation)
         .map((l) => ({
@@ -223,19 +264,33 @@ export default function DocumentFormPage({ id }: { id?: number }) {
     if (a.depot) setValue(`lines.${idx}.depot`, a.depot);
   };
 
+  const statusOptions = STATUS_OPTIONS_BY_TYPE[watchedType] ?? [];
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <PageHeader
         title={editing ? `Modifier le document` : "Nouveau document"}
-        description={editing ? existing?.numero : "Création d'une facture, d'un devis ou d'un bon de livraison."}
+        description={
+          editing
+            ? existing?.numero
+            : "Création d'une facture, d'une proforma, d'un devis, d'un bon de livraison ou d'un avoir."
+        }
         action={
           <>
-            <Button type="button" variant="outline" onClick={() => navigate(editing && id ? `/documents/${id}` : "/documents")}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                navigate(editing && id ? `/documents/${id}` : "/documents")
+              }
+            >
               <ArrowLeft className="w-4 h-4 mr-2" /> Annuler
             </Button>
             <Button type="submit" disabled={create.isPending || update.isPending}>
               <Save className="w-4 h-4 mr-2" />
-              {create.isPending || update.isPending ? "Enregistrement…" : "Enregistrer"}
+              {create.isPending || update.isPending
+                ? "Enregistrement…"
+                : "Enregistrer"}
             </Button>
           </>
         }
@@ -253,12 +308,27 @@ export default function DocumentFormPage({ id }: { id?: number }) {
                 control={control}
                 name="type"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange} disabled={editing}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <Select
+                    value={field.value}
+                    onValueChange={(v) => {
+                      field.onChange(v);
+                      const allowed = STATUS_OPTIONS_BY_TYPE[v] ?? [];
+                      const current = watch("status");
+                      if (!allowed.includes(current)) {
+                        setValue("status", (allowed[0] ?? "brouillon") as DocumentStatus);
+                      }
+                    }}
+                    disabled={editing}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="facture">Facture</SelectItem>
+                      <SelectItem value="facture_proforma">Facture proforma</SelectItem>
                       <SelectItem value="devis">Devis</SelectItem>
                       <SelectItem value="bon_livraison">Bon de livraison</SelectItem>
+                      <SelectItem value="avoir">Avoir</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -271,13 +341,15 @@ export default function DocumentFormPage({ id }: { id?: number }) {
                 name="status"
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="brouillon">Brouillon</SelectItem>
-                      <SelectItem value="valide">Validé</SelectItem>
-                      {watchedType === "facture" && <SelectItem value="paye">Payé</SelectItem>}
-                      {watchedType === "bon_livraison" && <SelectItem value="livre">Livré</SelectItem>}
-                      <SelectItem value="annule">Annulé</SelectItem>
+                      {statusOptions.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {DOCUMENT_STATUS_LABEL[s] ?? s}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
@@ -285,14 +357,26 @@ export default function DocumentFormPage({ id }: { id?: number }) {
             </div>
             <div className="col-span-2">
               <Label>Client *</Label>
-              <Controller
-                control={control}
-                name="clientId"
-                rules={{ required: true }}
-                render={({ field }) => (
-                  <ClientCombobox value={field.value} onChange={field.onChange} />
-                )}
-              />
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <Controller
+                    control={control}
+                    name="clientId"
+                    rules={{ required: true }}
+                    render={({ field }) => (
+                      <ClientCombobox value={field.value} onChange={field.onChange} />
+                    )}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setClientDialogOpen(true)}
+                >
+                  <UserPlus className="w-4 h-4 mr-2" /> Nouveau
+                </Button>
+              </div>
               {formState.errors.clientId && (
                 <p className="text-xs text-destructive mt-1">Client obligatoire</p>
               )}
@@ -310,8 +394,12 @@ export default function DocumentFormPage({ id }: { id?: number }) {
               <Input id="vendeur" {...register("vendeur")} placeholder="Nom du vendeur" />
             </div>
             <div>
-              <Label htmlFor="reference">Référence interne</Label>
-              <Input id="reference" {...register("reference")} placeholder="Bon de commande…" />
+              <Label htmlFor="reference">Référence</Label>
+              <Input
+                id="reference"
+                {...register("reference")}
+                placeholder="Bon de commande, référence externe…"
+              />
             </div>
             <div className="col-span-2">
               <Label htmlFor="notes">Notes</Label>
@@ -327,23 +415,35 @@ export default function DocumentFormPage({ id }: { id?: number }) {
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between gap-3 p-3 rounded-md bg-muted/50">
               <div>
-                <Label htmlFor="applyTva" className="cursor-pointer">Appliquer TVA {tvaRate}%</Label>
+                <Label htmlFor="tvaPourMemoire" className="cursor-pointer">
+                  TVA pour mémoire
+                </Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  TVA affichée mais non incluse dans le net à payer.
+                </p>
               </div>
               <Controller
                 control={control}
-                name="applyTva"
+                name="tvaPourMemoire"
                 render={({ field }) => (
-                  <Switch id="applyTva" checked={field.value} onCheckedChange={field.onChange} />
+                  <Switch
+                    id="tvaPourMemoire"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
                 )}
               />
             </div>
             <div className="space-y-2 text-sm">
               <Row label="Total HT" value={`${formatMoney(totals.totalHt)} F`} />
               <Row label="Remise" value={`${formatMoney(totals.totalRemise)} F`} />
-              <Row label={`TVA ${tvaRate}%`} value={`${formatMoney(totals.totalTva)} F`} />
+              <Row
+                label={watchedMemoire ? `TVA ${tvaRate}% (pour mémoire)` : `TVA ${tvaRate}%`}
+                value={`${formatMoney(totals.totalTva)} F`}
+              />
               <div className="border-t border-border pt-2 mt-2">
                 <Row
-                  label="Total TTC"
+                  label="Net à payer"
                   value={`${formatMoney(totals.totalTtc)} F`}
                   bold
                 />
@@ -356,7 +456,12 @@ export default function DocumentFormPage({ id }: { id?: number }) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Lignes</CardTitle>
-          <Button type="button" variant="outline" size="sm" onClick={() => append(emptyLine())}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => append(emptyLine())}
+          >
             <Plus className="w-4 h-4 mr-2" /> Ajouter une ligne
           </Button>
         </CardHeader>
@@ -368,7 +473,8 @@ export default function DocumentFormPage({ id }: { id?: number }) {
                 <TableHead>Désignation</TableHead>
                 <TableHead className="w-[80px]">Qté</TableHead>
                 <TableHead className="w-[80px]">Unité</TableHead>
-                <TableHead className="w-[110px]">Prix U.</TableHead>
+                <TableHead className="w-[110px]">Prix HT</TableHead>
+                <TableHead className="w-[110px] text-right">Prix TTC</TableHead>
                 <TableHead className="w-[80px]">R %</TableHead>
                 <TableHead className="w-[120px] text-right">Montant HT</TableHead>
                 <TableHead className="w-[40px]"></TableHead>
@@ -377,9 +483,11 @@ export default function DocumentFormPage({ id }: { id?: number }) {
             <TableBody>
               {fields.map((f, idx) => {
                 const l = watchedLines[idx];
-                const montant =
-                  ((Number(l?.quantite) || 0) * (Number(l?.prixUnitaire) || 0)) *
-                  (1 - (Number(l?.remisePct) || 0) / 100);
+                const qty = Number(l?.quantite) || 0;
+                const pu = Number(l?.prixUnitaire) || 0;
+                const rem = Number(l?.remisePct) || 0;
+                const montant = qty * pu * (1 - rem / 100);
+                const prixTtc = watchedMemoire ? pu : pu * (1 + tvaRate / 100);
                 return (
                   <TableRow key={f.id}>
                     <TableCell>
@@ -416,6 +524,9 @@ export default function DocumentFormPage({ id }: { id?: number }) {
                         className="h-9 text-right tabular-nums"
                       />
                     </TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      {formatMoney(prixTtc)}
+                    </TableCell>
                     <TableCell>
                       <Input
                         type="number"
@@ -445,15 +556,118 @@ export default function DocumentFormPage({ id }: { id?: number }) {
           </Table>
         </CardContent>
       </Card>
+
+      <QuickClientDialog
+        open={clientDialogOpen}
+        onOpenChange={setClientDialogOpen}
+        onCreate={(v) =>
+          createClient.mutate({
+            data: {
+              name: v.name,
+              contactName: v.contactName || null,
+              phone: v.phone || null,
+              city: v.city || null,
+              address: v.address || null,
+              fiscalNumber: v.fiscalNumber || null,
+            } as CreateClientBody,
+          })
+        }
+        loading={createClient.isPending}
+      />
     </form>
   );
 }
 
 function Row({ label, value, bold }: { label: string; value: string; bold?: boolean }) {
   return (
-    <div className={`flex items-center justify-between ${bold ? "text-base font-bold" : ""}`}>
+    <div
+      className={`flex items-center justify-between ${bold ? "text-base font-bold" : ""}`}
+    >
       <span className="text-muted-foreground">{label}</span>
       <span className="tabular-nums">{value}</span>
     </div>
+  );
+}
+
+function QuickClientDialog({
+  open,
+  onOpenChange,
+  onCreate,
+  loading,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onCreate: (v: QuickClientValues) => void;
+  loading: boolean;
+}) {
+  const { register, handleSubmit, reset, formState } = useForm<QuickClientValues>({
+    defaultValues: {
+      name: "",
+      contactName: "",
+      phone: "",
+      city: "",
+      address: "",
+      fiscalNumber: "",
+    },
+  });
+
+  useEffect(() => {
+    if (!open) reset();
+  }, [open, reset]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Nouveau client</DialogTitle>
+          <DialogDescription>
+            Créer un client rapidement sans quitter le document.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit(onCreate)} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <Label htmlFor="qc-name">Raison sociale *</Label>
+              <Input
+                id="qc-name"
+                {...register("name", { required: true })}
+                placeholder="Ex. FULLNESS SARL"
+              />
+              {formState.errors.name && (
+                <p className="text-xs text-destructive mt-1">Champ obligatoire</p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="qc-contact">Contact</Label>
+              <Input id="qc-contact" {...register("contactName")} />
+            </div>
+            <div>
+              <Label htmlFor="qc-phone">Téléphone</Label>
+              <Input id="qc-phone" {...register("phone")} />
+            </div>
+            <div>
+              <Label htmlFor="qc-city">Ville</Label>
+              <Input id="qc-city" {...register("city")} placeholder="Lomé" />
+            </div>
+            <div>
+              <Label htmlFor="qc-fiscal">Numéro fiscal (NIF)</Label>
+              <Input id="qc-fiscal" {...register("fiscalNumber")} />
+            </div>
+            <div className="col-span-2">
+              <Label htmlFor="qc-address">Adresse</Label>
+              <Input id="qc-address" {...register("address")} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Annuler
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Enregistrement…" : "Créer le client"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -28,6 +28,7 @@ export interface Document {
   totalTva: number;
   totalTtc: number;
   applyTva: boolean;
+  tvaPourMemoire: boolean;
   relatedDocumentId?: number | null;
   createdAt: Date;
 }

@@ -29,6 +29,7 @@ export const documentsTable = pgTable("documents", {
   totalTva: doublePrecision("total_tva").notNull().default(0),
   totalTtc: doublePrecision("total_ttc").notNull().default(0),
   applyTva: boolean("apply_tva").notNull().default(true),
+  tvaPourMemoire: boolean("tva_pour_memoire").notNull().default(false),
   relatedDocumentId: integer("related_document_id"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()

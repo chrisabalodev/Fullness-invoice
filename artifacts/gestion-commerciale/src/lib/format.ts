@@ -33,12 +33,16 @@ export const DOCUMENT_TYPE_LABEL: Record<string, string> = {
   facture: "Facture",
   devis: "Devis",
   bon_livraison: "Bon de livraison",
+  facture_proforma: "Facture proforma",
+  avoir: "Avoir",
 };
 
 export const DOCUMENT_TYPE_TITLE_PRINT: Record<string, string> = {
   facture: "FACTURE",
   devis: "DEVIS",
   bon_livraison: "BON A LIVRER",
+  facture_proforma: "FACTURE PROFORMA",
+  avoir: "AVOIR",
 };
 
 export const DOCUMENT_STATUS_LABEL: Record<string, string> = {
@@ -53,4 +57,6 @@ export const STATUS_OPTIONS_BY_TYPE: Record<string, string[]> = {
   facture: ["brouillon", "valide", "paye", "annule"],
   devis: ["brouillon", "valide", "annule"],
   bon_livraison: ["brouillon", "valide", "livre", "annule"],
+  facture_proforma: ["brouillon", "valide", "annule"],
+  avoir: ["brouillon", "valide", "annule"],
 };

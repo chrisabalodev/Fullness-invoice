@@ -11,6 +11,8 @@ import {
   Receipt,
   Truck,
   Files,
+  FileSpreadsheet,
+  Undo2,
 } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState } from "@/components/empty-state";
@@ -38,8 +40,10 @@ import { formatMoney, formatDate } from "@/lib/format";
 const TYPE_TABS = [
   { value: "all", label: "Tous", icon: Files },
   { value: "facture", label: "Factures", icon: Receipt },
+  { value: "facture_proforma", label: "Proformas", icon: FileSpreadsheet },
   { value: "devis", label: "Devis", icon: FileText },
   { value: "bon_livraison", label: "Bons de livraison", icon: Truck },
+  { value: "avoir", label: "Avoirs", icon: Undo2 },
 ] as const;
 
 export default function DocumentsPage() {

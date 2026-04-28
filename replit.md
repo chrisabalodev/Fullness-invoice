@@ -37,7 +37,7 @@ French-language commercial management web app for a Togo wholesale company. All 
 
 ### Features
 - **Tableau de bord** — KPIs (CA, impayés, counts), monthly revenue chart, top clients/articles, recent docs
-- **Documents** — Factures, Devis, Bons de livraison; auto-numero `FG/DV/BL+year` starting at 10001; tabs+filters; live totals; article picker autofill; status workflow; convert devis→facture, BL→facture; print/PDF view
+- **Documents** — Factures, Factures proforma, Devis, Bons de livraison, Avoirs; auto-numero `FG/FP/DV/BL/AV+year` starting at 10001; tabs+filters; live totals; article picker autofill; inline client creation; editable reference; "TVA pour mémoire" mode (TVA shown but excluded from net à payer); Prix HT + Prix TTC columns; status workflow; convert devis→facture, BL→facture; print/PDF view
 - **Clients** — CRUD with detail page (history of documents)
 - **Articles** — CRUD with stock + pricing + detail page
 - **Paramètres** — Company info, comptoir, bank accounts, TVA rate, default vendor

@@ -18,6 +18,7 @@ export interface CreateDocumentBody {
   reference?: string | null;
   notes?: string | null;
   applyTva: boolean;
+  tvaPourMemoire?: boolean;
   status: DocumentStatus;
   lines: CreateDocumentLineBody[];
 }

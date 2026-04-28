@@ -14,6 +14,7 @@ export function computeTotals(
   lines: LineInput[],
   applyTva: boolean,
   tvaRate: number,
+  tvaPourMemoire: boolean = false,
 ): {
   totalHt: number;
   totalRemise: number;
@@ -31,7 +32,8 @@ export function computeTotals(
   }
 
   const totalTva = applyTva ? totalHt * (tvaRate / 100) : 0;
-  const totalTtc = totalHt + totalTva;
+  // TVA pour mémoire : la TVA est calculée pour information mais n'est pas incluse dans le NET A PAYER.
+  const totalTtc = tvaPourMemoire ? totalHt : totalHt + totalTva;
 
   return {
     totalHt: round2(totalHt),

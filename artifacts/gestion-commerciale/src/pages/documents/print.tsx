@@ -37,6 +37,7 @@ export default function DocumentPrintPage({ id }: { id: number }) {
       const t = setTimeout(() => window.print(), 350);
       return () => clearTimeout(t);
     }
+    return undefined;
   }, [doc, company]);
 
   if (!doc || !company) {
@@ -44,10 +45,19 @@ export default function DocumentPrintPage({ id }: { id: number }) {
   }
 
   const title = DOCUMENT_TYPE_TITLE_PRINT[doc.type] ?? doc.type.toUpperCase();
-  const isFacture = doc.type === "facture";
   const isDevis = doc.type === "devis";
+  const isProforma = doc.type === "facture_proforma";
+  const isAvoir = doc.type === "avoir";
   const isBL = doc.type === "bon_livraison";
   const showPrices = !isBL;
+  const arreteLabel = isDevis
+    ? "Arrêté le présent devis à la somme de :"
+    : isProforma
+    ? "Arrêtée la présente facture proforma à la somme de :"
+    : isAvoir
+    ? "Arrêté le présent avoir à la somme de :"
+    : "Arrêtée la présente facture à la somme de :";
+  const doitLabel = isAvoir ? "AVOIR :" : isBL ? "LIVRER A :" : "DOIT :";
 
   const tvaRate = company.tvaRate ?? 18;
   const totalRound = Math.round(doc.totalTtc);
@@ -101,7 +111,7 @@ export default function DocumentPrintPage({ id }: { id: number }) {
         </div>
 
         <div className="client-row">
-          <div className="client-label">DOIT :</div>
+          <div className="client-label">{doitLabel}</div>
           <div className="client-info">
             <div className="client-name">{doc.client.name}</div>
             <div className="client-meta">
@@ -123,33 +133,40 @@ export default function DocumentPrintPage({ id }: { id: number }) {
               {isBL && <th className="col-num">DEPOT</th>}
               {showPrices && (
                 <>
-                  <th className="col-num">PRIX</th>
+                  <th className="col-num">PRIX HT</th>
+                  <th className="col-num">PRIX TTC</th>
                   <th className="col-num">R(%)</th>
-                  <th className="col-num">MONTANT</th>
+                  <th className="col-num">MONTANT HT</th>
                 </>
               )}
             </tr>
           </thead>
           <tbody>
-            {doc.lines.map((l) => (
-              <tr key={l.id}>
-                <td className="col-ref mono">{l.reference}</td>
-                <td className="col-des">{l.designation}</td>
-                <td className="col-num">{formatMoney(l.quantite)}</td>
-                <td className="col-num">{l.unite}</td>
-                {isBL && <td className="col-num">{l.depot ?? ""}</td>}
-                {showPrices && (
-                  <>
-                    <td className="col-num">{formatMoneyDecimal(l.prixUnitaire)}</td>
-                    <td className="col-num">{formatMoney(l.remisePct)}</td>
-                    <td className="col-num">{formatMoneyDecimal(l.montantHt)}</td>
-                  </>
-                )}
-              </tr>
-            ))}
+            {doc.lines.map((l) => {
+              const prixTtc = doc.tvaPourMemoire
+                ? l.prixUnitaire
+                : l.prixUnitaire * (1 + tvaRate / 100);
+              return (
+                <tr key={l.id}>
+                  <td className="col-ref mono">{l.reference}</td>
+                  <td className="col-des">{l.designation}</td>
+                  <td className="col-num">{formatMoney(l.quantite)}</td>
+                  <td className="col-num">{l.unite}</td>
+                  {isBL && <td className="col-num">{l.depot ?? ""}</td>}
+                  {showPrices && (
+                    <>
+                      <td className="col-num">{formatMoneyDecimal(l.prixUnitaire)}</td>
+                      <td className="col-num">{formatMoneyDecimal(prixTtc)}</td>
+                      <td className="col-num">{formatMoney(l.remisePct)}</td>
+                      <td className="col-num">{formatMoneyDecimal(l.montantHt)}</td>
+                    </>
+                  )}
+                </tr>
+              );
+            })}
             {Array.from({ length: Math.max(0, 12 - doc.lines.length) }).map((_, i) => (
               <tr key={`spacer-${i}`} className="spacer">
-                <td colSpan={isBL ? 5 : 7}>&nbsp;</td>
+                <td colSpan={isBL ? 5 : 8}>&nbsp;</td>
               </tr>
             ))}
           </tbody>
@@ -158,9 +175,7 @@ export default function DocumentPrintPage({ id }: { id: number }) {
         {showPrices && (
           <div className="bottom-row">
             <div className="lettres-box">
-              <div className="lettres-label">
-                Arrêté{isDevis ? " le présent devis" : "e la présente facture"} à la somme de :
-              </div>
+              <div className="lettres-label">{arreteLabel}</div>
               <div className="lettres-text">
                 {enLettres} francs cfa.
               </div>
@@ -179,13 +194,22 @@ export default function DocumentPrintPage({ id }: { id: number }) {
                 <span className="num">{formatMoneyDecimal(doc.totalRemise)}</span>
               </div>
               <div className="totals-row">
-                <span>Total TVA {tvaRate}% (F CFA)</span>
+                <span>
+                  {doc.tvaPourMemoire
+                    ? `TVA ${tvaRate}% pour mémoire (F CFA)`
+                    : `Total TVA ${tvaRate}% (F CFA)`}
+                </span>
                 <span className="num">{formatMoneyDecimal(doc.totalTva)}</span>
               </div>
               <div className="totals-grand">
                 <span>NET A PAYER (F CFA)</span>
                 <span className="num">{formatMoneyDecimal(doc.totalTtc)}</span>
               </div>
+              {doc.tvaPourMemoire && (
+                <div className="memo-mention">
+                  TVA pour mémoire — non incluse dans le net à payer.
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -359,6 +383,7 @@ const PRINT_CSS = `
     font-size: 11pt;
   }
   .num { font-family: 'Courier New', monospace; tabular-nums: true; }
+  .memo-mention { padding: 4px 10px; font-size: 8pt; font-style: italic; color: #444; border-top: 1px solid #999; }
 
   .signature-row {
     display: grid;

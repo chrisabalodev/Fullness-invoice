@@ -15,6 +15,8 @@ export const DocumentType = {
   facture: "facture",
   devis: "devis",
   bon_livraison: "bon_livraison",
+  facture_proforma: "facture_proforma",
+  avoir: "avoir",
 } as const;
 
 export type DocumentStatus =
@@ -146,6 +148,7 @@ export interface Document {
   totalTva: number;
   totalTtc: number;
   applyTva: boolean;
+  tvaPourMemoire: boolean;
   relatedDocumentId?: number | null;
   createdAt: string;
 }
@@ -172,6 +175,7 @@ export interface CreateDocumentBody {
   reference?: string | null;
   notes?: string | null;
   applyTva: boolean;
+  tvaPourMemoire?: boolean;
   status: DocumentStatus;
   lines: CreateDocumentLineBody[];
 }

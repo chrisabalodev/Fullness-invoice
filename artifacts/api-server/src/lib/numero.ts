@@ -5,6 +5,8 @@ const TYPE_PREFIX: Record<string, string> = {
   facture: "FG",
   devis: "DV",
   bon_livraison: "BL",
+  facture_proforma: "FP",
+  avoir: "AV",
 };
 
 function pad5(n: number): string {

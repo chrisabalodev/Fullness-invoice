@@ -22,6 +22,8 @@ const TYPE_STYLES: Record<string, string> = {
   facture: "bg-primary/10 text-primary border-primary/30",
   devis: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-900",
   bon_livraison: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950 dark:text-purple-200 dark:border-purple-900",
+  facture_proforma: "bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-950 dark:text-sky-200 dark:border-sky-900",
+  avoir: "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950 dark:text-rose-200 dark:border-rose-900",
 };
 
 export function TypeBadge({ type }: { type: string }) {
@@ -29,6 +31,8 @@ export function TypeBadge({ type }: { type: string }) {
     facture: "Facture",
     devis: "Devis",
     bon_livraison: "Bon de livraison",
+    facture_proforma: "Proforma",
+    avoir: "Avoir",
   };
   return (
     <Badge variant="outline" className={`${TYPE_STYLES[type] ?? ""} border font-medium`}>

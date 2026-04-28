@@ -12,4 +12,6 @@ export const DocumentType = {
   facture: "facture",
   devis: "devis",
   bon_livraison: "bon_livraison",
+  facture_proforma: "facture_proforma",
+  avoir: "avoir",
 } as const;

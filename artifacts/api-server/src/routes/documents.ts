@@ -50,6 +50,7 @@ async function loadDocument(id: number) {
     totalTva: doc.totalTva,
     totalTtc: doc.totalTtc,
     applyTva: doc.applyTva,
+    tvaPourMemoire: doc.tvaPourMemoire,
     relatedDocumentId: doc.relatedDocumentId,
     createdAt: doc.createdAt,
   };
@@ -107,6 +108,7 @@ router.post("/documents", async (req, res): Promise<void> => {
     parsed.data.lines,
     parsed.data.applyTva,
     tvaRate,
+    parsed.data.tvaPourMemoire ?? false,
   );
   const numero = await generateNumero(parsed.data.type);
 
@@ -129,6 +131,7 @@ router.post("/documents", async (req, res): Promise<void> => {
       reference: parsed.data.reference ?? null,
       notes: parsed.data.notes ?? null,
       applyTva: parsed.data.applyTva,
+      tvaPourMemoire: parsed.data.tvaPourMemoire ?? false,
       ...totals,
     })
     .returning();
@@ -186,7 +189,12 @@ router.put("/documents/:id", async (req, res): Promise<void> => {
     return;
   }
   const tvaRate = await getCompanyTvaRate();
-  const totals = computeTotals(body.data.lines, body.data.applyTva, tvaRate);
+  const totals = computeTotals(
+    body.data.lines,
+    body.data.applyTva,
+    tvaRate,
+    body.data.tvaPourMemoire ?? false,
+  );
 
   const [doc] = await db
     .update(documentsTable)
@@ -206,6 +214,7 @@ router.put("/documents/:id", async (req, res): Promise<void> => {
       reference: body.data.reference ?? null,
       notes: body.data.notes ?? null,
       applyTva: body.data.applyTva,
+      tvaPourMemoire: body.data.tvaPourMemoire ?? false,
       ...totals,
     })
     .where(eq(documentsTable.id, params.data.id))
@@ -300,7 +309,7 @@ router.post("/documents/:id/convert", async (req, res): Promise<void> => {
     remisePct: l.remisePct,
     depot: l.depot,
   }));
-  const totals = computeTotals(lines, source.applyTva, tvaRate);
+  const totals = computeTotals(lines, source.applyTva, tvaRate, source.tvaPourMemoire);
   const numero = await generateNumero(body.data.targetType);
   const today = new Date().toISOString().slice(0, 10);
 
