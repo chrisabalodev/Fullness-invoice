@@ -3,20 +3,23 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: API de gestion commerciale (factures, bons de livraison, devis, articles, clients)
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: company
+  - name: clients
+  - name: articles
+  - name: documents
+  - name: dashboard
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +27,865 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /company:
+    get:
+      operationId: getCompany
+      tags: [company]
+      summary: Récupérer les informations de l'entreprise
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+    put:
+      operationId: updateCompany
+      tags: [company]
+      summary: Mettre à jour les informations de l'entreprise
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCompanyBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Company"
+
+  /clients:
+    get:
+      operationId: listClients
+      tags: [clients]
+      summary: Lister tous les clients
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Client"
+    post:
+      operationId: createClient
+      tags: [clients]
+      summary: Créer un client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClientBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+
+  /clients/{id}:
+    get:
+      operationId: getClient
+      tags: [clients]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+    put:
+      operationId: updateClient
+      tags: [clients]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClientBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+    delete:
+      operationId: deleteClient
+      tags: [clients]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "204":
+          description: Deleted
+
+  /articles:
+    get:
+      operationId: listArticles
+      tags: [articles]
+      summary: Lister tous les articles
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Article"
+    post:
+      operationId: createArticle
+      tags: [articles]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateArticleBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Article"
+
+  /articles/{id}:
+    get:
+      operationId: getArticle
+      tags: [articles]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Article"
+    put:
+      operationId: updateArticle
+      tags: [articles]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateArticleBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Article"
+    delete:
+      operationId: deleteArticle
+      tags: [articles]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "204":
+          description: Deleted
+
+  /documents:
+    get:
+      operationId: listDocuments
+      tags: [documents]
+      summary: Lister tous les documents (factures, devis, bons de livraison)
+      parameters:
+        - name: type
+          in: query
+          schema:
+            $ref: "#/components/schemas/DocumentType"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/DocumentStatus"
+        - name: clientId
+          in: query
+          schema:
+            type: integer
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DocumentSummary"
+    post:
+      operationId: createDocument
+      tags: [documents]
+      summary: Créer un nouveau document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDocumentBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+
+  /documents/{id}:
+    get:
+      operationId: getDocument
+      tags: [documents]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+    put:
+      operationId: updateDocument
+      tags: [documents]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDocumentBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+    delete:
+      operationId: deleteDocument
+      tags: [documents]
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "204":
+          description: Deleted
+
+  /documents/{id}/status:
+    patch:
+      operationId: updateDocumentStatus
+      tags: [documents]
+      summary: Mettre à jour le statut (livré, payé, annulé...)
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDocumentStatusBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+
+  /documents/{id}/convert:
+    post:
+      operationId: convertDocument
+      tags: [documents]
+      summary: Convertir un document (devis→facture, facture→bon de livraison)
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConvertDocumentBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Document"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Statistiques globales
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/recent-documents:
+    get:
+      operationId: getRecentDocuments
+      tags: [dashboard]
+      summary: Documents récents
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DocumentSummary"
+
+  /dashboard/top-clients:
+    get:
+      operationId: getTopClients
+      tags: [dashboard]
+      summary: Clients les plus actifs (par chiffre d'affaires)
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 5
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopClient"
+
+  /dashboard/top-articles:
+    get:
+      operationId: getTopArticles
+      tags: [dashboard]
+      summary: Articles les plus vendus
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 5
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TopArticle"
+
+  /dashboard/monthly-revenue:
+    get:
+      operationId: getMonthlyRevenue
+      tags: [dashboard]
+      summary: Chiffre d'affaires mensuel (12 derniers mois)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MonthlyRevenue"
+
 components:
+  parameters:
+    IdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+
   schemas:
     HealthStatus:
       type: object
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    DocumentType:
+      type: string
+      enum: [facture, devis, bon_livraison]
+
+    DocumentStatus:
+      type: string
+      enum: [brouillon, valide, livre, paye, annule]
+
+    Company:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        address:
+          type: string
+        phone:
+          type: string
+        fiscalNumber:
+          type: string
+        rccm:
+          type: string
+        bankAccounts:
+          type: string
+          description: Comptes bancaires (texte libre)
+        comptoirName:
+          type: string
+        comptoirCity:
+          type: string
+        comptoirPhone:
+          type: string
+        tvaRate:
+          type: number
+          format: float
+        currency:
+          type: string
+        legalFooter:
+          type: string
+      required:
+        [id, name, address, phone, fiscalNumber, rccm, bankAccounts, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter]
+
+    UpdateCompanyBody:
+      type: object
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        phone:
+          type: string
+        fiscalNumber:
+          type: string
+        rccm:
+          type: string
+        bankAccounts:
+          type: string
+        comptoirName:
+          type: string
+        comptoirCity:
+          type: string
+        comptoirPhone:
+          type: string
+        tvaRate:
+          type: number
+          format: float
+        currency:
+          type: string
+        legalFooter:
+          type: string
+      required:
+        [name, address, phone, fiscalNumber, rccm, bankAccounts, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter]
+
+    Client:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        contactName:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        fiscalNumber:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, name, createdAt]
+
+    CreateClientBody:
+      type: object
+      properties:
+        name:
+          type: string
+        contactName:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        fiscalNumber:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required: [name]
+
+    Article:
+      type: object
+      properties:
+        id:
+          type: integer
+        reference:
+          type: string
+        designation:
+          type: string
+        unite:
+          type: string
+        prixUnitaire:
+          type: number
+          format: float
+        depot:
+          type: string
+          nullable: true
+        stock:
+          type: number
+          format: float
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, reference, designation, unite, prixUnitaire, stock, createdAt]
+
+    CreateArticleBody:
+      type: object
+      properties:
+        reference:
+          type: string
+        designation:
+          type: string
+        unite:
+          type: string
+        prixUnitaire:
+          type: number
+          format: float
+        depot:
+          type: string
+          nullable: true
+        stock:
+          type: number
+          format: float
+      required: [reference, designation, unite, prixUnitaire, stock]
+
+    DocumentLine:
+      type: object
+      properties:
+        id:
+          type: integer
+        articleId:
+          type: integer
+          nullable: true
+        reference:
+          type: string
+        designation:
+          type: string
+        quantite:
+          type: number
+          format: float
+        unite:
+          type: string
+        prixUnitaire:
+          type: number
+          format: float
+        remisePct:
+          type: number
+          format: float
+        montantHt:
+          type: number
+          format: float
+        depot:
+          type: string
+          nullable: true
+      required: [id, reference, designation, quantite, unite, prixUnitaire, remisePct, montantHt]
+
+    CreateDocumentLineBody:
+      type: object
+      properties:
+        articleId:
+          type: integer
+          nullable: true
+        reference:
+          type: string
+        designation:
+          type: string
+        quantite:
+          type: number
+          format: float
+        unite:
+          type: string
+        prixUnitaire:
+          type: number
+          format: float
+        remisePct:
+          type: number
+          format: float
+        depot:
+          type: string
+          nullable: true
+      required: [reference, designation, quantite, unite, prixUnitaire, remisePct]
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          $ref: "#/components/schemas/DocumentType"
+        numero:
+          type: string
+        status:
+          $ref: "#/components/schemas/DocumentStatus"
+        date:
+          type: string
+          format: date
+        echeance:
+          type: string
+          format: date
+          nullable: true
+        clientId:
+          type: integer
+        client:
+          $ref: "#/components/schemas/Client"
+        vendeur:
+          type: string
+          nullable: true
+        reference:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        lines:
+          type: array
+          items:
+            $ref: "#/components/schemas/DocumentLine"
+        totalHt:
+          type: number
+          format: float
+        totalRemise:
+          type: number
+          format: float
+        totalTva:
+          type: number
+          format: float
+        totalTtc:
+          type: number
+          format: float
+        applyTva:
+          type: boolean
+        relatedDocumentId:
+          type: integer
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        [id, type, numero, status, date, clientId, client, lines, totalHt, totalRemise, totalTva, totalTtc, applyTva, createdAt]
+
+    DocumentSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          $ref: "#/components/schemas/DocumentType"
+        numero:
+          type: string
+        status:
+          $ref: "#/components/schemas/DocumentStatus"
+        date:
+          type: string
+          format: date
+        echeance:
+          type: string
+          format: date
+          nullable: true
+        clientId:
+          type: integer
+        clientName:
+          type: string
+        totalTtc:
+          type: number
+          format: float
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, type, numero, status, date, clientId, clientName, totalTtc, createdAt]
+
+    CreateDocumentBody:
+      type: object
+      properties:
+        type:
+          $ref: "#/components/schemas/DocumentType"
+        date:
+          type: string
+          format: date
+        echeance:
+          type: string
+          format: date
+          nullable: true
+        clientId:
+          type: integer
+        vendeur:
+          type: string
+          nullable: true
+        reference:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        applyTva:
+          type: boolean
+        status:
+          $ref: "#/components/schemas/DocumentStatus"
+        lines:
+          type: array
+          items:
+            $ref: "#/components/schemas/CreateDocumentLineBody"
+      required: [type, date, clientId, applyTva, status, lines]
+
+    UpdateDocumentStatusBody:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/DocumentStatus"
+      required: [status]
+
+    ConvertDocumentBody:
+      type: object
+      properties:
+        targetType:
+          $ref: "#/components/schemas/DocumentType"
+      required: [targetType]
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalRevenue:
+          type: number
+          format: float
+        totalUnpaid:
+          type: number
+          format: float
+        invoiceCount:
+          type: integer
+        quoteCount:
+          type: integer
+        deliveryCount:
+          type: integer
+        clientCount:
+          type: integer
+        articleCount:
+          type: integer
+        currency:
+          type: string
+      required:
+        [totalRevenue, totalUnpaid, invoiceCount, quoteCount, deliveryCount, clientCount, articleCount, currency]
+
+    TopClient:
+      type: object
+      properties:
+        clientId:
+          type: integer
+        clientName:
+          type: string
+        totalRevenue:
+          type: number
+          format: float
+        invoiceCount:
+          type: integer
+      required: [clientId, clientName, totalRevenue, invoiceCount]
+
+    TopArticle:
+      type: object
+      properties:
+        articleId:
+          type: integer
+          nullable: true
+        reference:
+          type: string
+        designation:
+          type: string
+        totalQuantity:
+          type: number
+          format: float
+        totalRevenue:
+          type: number
+          format: float
+      required: [reference, designation, totalQuantity, totalRevenue]
+
+    MonthlyRevenue:
+      type: object
+      properties:
+        month:
+          type: string
+          description: YYYY-MM
+        revenue:
+          type: number
+          format: float
+        invoiceCount:
+          type: integer
+      required: [month, revenue, invoiceCount]
