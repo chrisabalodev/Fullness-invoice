@@ -24,6 +24,7 @@ import type {
   CreateArticleBody,
   CreateClientBody,
   CreateDocumentBody,
+  CreateReglementBody,
   DashboardSummary,
   Document,
   DocumentSummary,
@@ -35,6 +36,7 @@ import type {
   ListClientsParams,
   ListDocumentsParams,
   MonthlyRevenue,
+  Reglement,
   TopArticle,
   TopClient,
   UpdateCompanyBody,
@@ -1619,6 +1621,264 @@ export const useUpdateDocumentStatus = <
   TContext
 > => {
   return useMutation(getUpdateDocumentStatusMutationOptions(options));
+};
+
+/**
+ * @summary Lister les règlements d'un document
+ */
+export const getListReglementsUrl = (id: number) => {
+  return `/api/documents/${id}/reglements`;
+};
+
+export const listReglements = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Reglement[]> => {
+  return customFetch<Reglement[]>(getListReglementsUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListReglementsQueryKey = (id: number) => {
+  return [`/api/documents/${id}/reglements`] as const;
+};
+
+export const getListReglementsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listReglements>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listReglements>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListReglementsQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof listReglements>>> = ({
+    signal,
+  }) => listReglements(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listReglements>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListReglementsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listReglements>>
+>;
+export type ListReglementsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Lister les règlements d'un document
+ */
+
+export function useListReglements<
+  TData = Awaited<ReturnType<typeof listReglements>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listReglements>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListReglementsQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Ajouter un règlement à un document
+ */
+export const getCreateReglementUrl = (id: number) => {
+  return `/api/documents/${id}/reglements`;
+};
+
+export const createReglement = async (
+  id: number,
+  createReglementBody: CreateReglementBody,
+  options?: RequestInit,
+): Promise<Reglement> => {
+  return customFetch<Reglement>(getCreateReglementUrl(id), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createReglementBody),
+  });
+};
+
+export const getCreateReglementMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createReglement>>,
+    TError,
+    { id: number; data: BodyType<CreateReglementBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createReglement>>,
+  TError,
+  { id: number; data: BodyType<CreateReglementBody> },
+  TContext
+> => {
+  const mutationKey = ["createReglement"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createReglement>>,
+    { id: number; data: BodyType<CreateReglementBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return createReglement(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateReglementMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createReglement>>
+>;
+export type CreateReglementMutationBody = BodyType<CreateReglementBody>;
+export type CreateReglementMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Ajouter un règlement à un document
+ */
+export const useCreateReglement = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createReglement>>,
+    TError,
+    { id: number; data: BodyType<CreateReglementBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createReglement>>,
+  TError,
+  { id: number; data: BodyType<CreateReglementBody> },
+  TContext
+> => {
+  return useMutation(getCreateReglementMutationOptions(options));
+};
+
+/**
+ * @summary Supprimer un règlement
+ */
+export const getDeleteReglementUrl = (id: number) => {
+  return `/api/reglements/${id}`;
+};
+
+export const deleteReglement = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteReglementUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteReglementMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteReglement>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteReglement>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteReglement"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteReglement>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteReglement(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteReglementMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteReglement>>
+>;
+
+export type DeleteReglementMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Supprimer un règlement
+ */
+export const useDeleteReglement = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteReglement>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteReglement>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteReglementMutationOptions(options));
 };
 
 /**

@@ -321,6 +321,53 @@ paths:
               schema:
                 $ref: "#/components/schemas/Document"
 
+  /documents/{id}/reglements:
+    get:
+      operationId: listReglements
+      tags: [documents]
+      summary: Lister les règlements d'un document
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reglement"
+    post:
+      operationId: createReglement
+      tags: [documents]
+      summary: Ajouter un règlement à un document
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReglementBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reglement"
+
+  /reglements/{id}:
+    delete:
+      operationId: deleteReglement
+      tags: [documents]
+      summary: Supprimer un règlement
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "204":
+          description: Deleted
+
   /documents/{id}/convert:
     post:
       operationId: convertDocument
@@ -476,6 +523,9 @@ components:
         bankAccounts:
           type: string
           description: Comptes bancaires (texte libre)
+        modesReglement:
+          type: string
+          description: Modes de règlement (un par ligne)
         comptoirName:
           type: string
         comptoirCity:
@@ -490,7 +540,7 @@ components:
         legalFooter:
           type: string
       required:
-        [id, name, address, phone, fiscalNumber, rccm, bankAccounts, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter]
+        [id, name, address, phone, fiscalNumber, rccm, bankAccounts, modesReglement, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter]
 
     UpdateCompanyBody:
       type: object
@@ -507,6 +557,8 @@ components:
           type: string
         bankAccounts:
           type: string
+        modesReglement:
+          type: string
         comptoirName:
           type: string
         comptoirCity:
@@ -521,7 +573,7 @@ components:
         legalFooter:
           type: string
       required:
-        [name, address, phone, fiscalNumber, rccm, bankAccounts, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter]
+        [name, address, phone, fiscalNumber, rccm, bankAccounts, modesReglement, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter]
 
     Client:
       type: object
@@ -652,13 +704,16 @@ components:
         remisePct:
           type: number
           format: float
+        tvaRate:
+          type: number
+          format: float
         montantHt:
           type: number
           format: float
         depot:
           type: string
           nullable: true
-      required: [id, reference, designation, quantite, unite, prixUnitaire, remisePct, montantHt]
+      required: [id, reference, designation, quantite, unite, prixUnitaire, remisePct, tvaRate, montantHt]
 
     CreateDocumentLineBody:
       type: object
@@ -681,10 +736,13 @@ components:
         remisePct:
           type: number
           format: float
+        tvaRate:
+          type: number
+          format: float
         depot:
           type: string
           nullable: true
-      required: [reference, designation, quantite, unite, prixUnitaire, remisePct]
+      required: [reference, designation, quantite, unite, prixUnitaire, remisePct, tvaRate]
 
     Document:
       type: object
@@ -717,10 +775,17 @@ components:
         notes:
           type: string
           nullable: true
+        modeReglement:
+          type: string
+          nullable: true
         lines:
           type: array
           items:
             $ref: "#/components/schemas/DocumentLine"
+        reglements:
+          type: array
+          items:
+            $ref: "#/components/schemas/Reglement"
         totalHt:
           type: number
           format: float
@@ -733,6 +798,12 @@ components:
         totalTtc:
           type: number
           format: float
+        totalRegle:
+          type: number
+          format: float
+        resteAPayer:
+          type: number
+          format: float
         applyTva:
           type: boolean
         tvaPourMemoire:
@@ -740,11 +811,14 @@ components:
         relatedDocumentId:
           type: integer
           nullable: true
+        relatedDocumentNumero:
+          type: string
+          nullable: true
         createdAt:
           type: string
           format: date-time
       required:
-        [id, type, numero, status, date, clientId, client, lines, totalHt, totalRemise, totalTva, totalTtc, applyTva, tvaPourMemoire, createdAt]
+        [id, type, numero, status, date, clientId, client, lines, reglements, totalHt, totalRemise, totalTva, totalTtc, totalRegle, resteAPayer, applyTva, tvaPourMemoire, createdAt]
 
     DocumentSummary:
       type: object
@@ -799,6 +873,9 @@ components:
         notes:
           type: string
           nullable: true
+        modeReglement:
+          type: string
+          nullable: true
         applyTva:
           type: boolean
         tvaPourMemoire:
@@ -810,6 +887,51 @@ components:
           items:
             $ref: "#/components/schemas/CreateDocumentLineBody"
       required: [type, date, clientId, applyTva, status, lines]
+
+    Reglement:
+      type: object
+      properties:
+        id:
+          type: integer
+        documentId:
+          type: integer
+        date:
+          type: string
+          format: date
+        montant:
+          type: number
+          format: float
+        mode:
+          type: string
+        reference:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, documentId, date, montant, mode, createdAt]
+
+    CreateReglementBody:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        montant:
+          type: number
+          format: float
+        mode:
+          type: string
+        reference:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required: [date, montant, mode]
 
     UpdateDocumentStatusBody:
       type: object

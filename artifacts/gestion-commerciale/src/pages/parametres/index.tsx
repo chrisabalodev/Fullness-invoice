@@ -22,6 +22,7 @@ interface CompanyFormValues {
   fiscalNumber: string;
   rccm: string;
   bankAccounts: string;
+  modesReglement: string;
   comptoirName: string;
   comptoirCity: string;
   comptoirPhone: string;
@@ -106,6 +107,16 @@ export default function ParametresPage() {
             <div className="col-span-2">
               <Label htmlFor="bankAccounts">Comptes bancaires (un par ligne)</Label>
               <Textarea id="bankAccounts" rows={3} {...register("bankAccounts")} className="font-mono text-sm" />
+            </div>
+            <div className="col-span-2">
+              <Label htmlFor="modesReglement">Modes de règlement (un par ligne)</Label>
+              <Textarea
+                id="modesReglement"
+                rows={4}
+                {...register("modesReglement")}
+                className="font-mono text-sm"
+                placeholder={"Espèces\nChèque\nVirement bancaire\nMobile money\nCarte bancaire"}
+              />
             </div>
           </CardContent>
         </Card>

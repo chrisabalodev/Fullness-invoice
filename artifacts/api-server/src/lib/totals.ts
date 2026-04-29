@@ -2,6 +2,7 @@ export interface LineInput {
   quantite: number;
   prixUnitaire: number;
   remisePct: number;
+  tvaRate?: number;
 }
 
 export function computeLineMontantHt(line: LineInput): number {
@@ -13,7 +14,7 @@ export function computeLineMontantHt(line: LineInput): number {
 export function computeTotals(
   lines: LineInput[],
   applyTva: boolean,
-  tvaRate: number,
+  defaultTvaRate: number,
   tvaPourMemoire: boolean = false,
 ): {
   totalHt: number;
@@ -23,15 +24,20 @@ export function computeTotals(
 } {
   let totalHt = 0;
   let totalRemise = 0;
+  let totalTva = 0;
 
   for (const line of lines) {
     const base = line.quantite * line.prixUnitaire;
     const remise = base * (line.remisePct / 100);
-    totalHt += base - remise;
+    const ht = base - remise;
+    totalHt += ht;
     totalRemise += remise;
+    const lineRate = line.tvaRate ?? defaultTvaRate;
+    if (applyTva) {
+      totalTva += ht * (lineRate / 100);
+    }
   }
 
-  const totalTva = applyTva ? totalHt * (tvaRate / 100) : 0;
   // TVA pour mémoire : la TVA est calculée pour information mais n'est pas incluse dans le NET A PAYER.
   const totalTtc = tvaPourMemoire ? totalHt : totalHt + totalTva;
 

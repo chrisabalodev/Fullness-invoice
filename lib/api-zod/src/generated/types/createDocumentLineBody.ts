@@ -14,5 +14,6 @@ export interface CreateDocumentLineBody {
   unite: string;
   prixUnitaire: number;
   remisePct: number;
+  tvaRate: number;
   depot?: string | null;
 }

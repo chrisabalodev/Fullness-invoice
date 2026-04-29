@@ -1,5 +1,12 @@
 import { Router, type IRouter } from "express";
-import { db, documentsTable, documentLinesTable, clientsTable, companyTable } from "@workspace/db";
+import {
+  db,
+  documentsTable,
+  documentLinesTable,
+  clientsTable,
+  companyTable,
+  reglementsTable,
+} from "@workspace/db";
 import { eq, and, desc, asc } from "drizzle-orm";
 import {
   CreateDocumentBody,
@@ -32,6 +39,23 @@ async function loadDocument(id: number) {
     .from(documentLinesTable)
     .where(eq(documentLinesTable.documentId, doc.id))
     .orderBy(asc(documentLinesTable.position));
+  const reglements = await db
+    .select()
+    .from(reglementsTable)
+    .where(eq(reglementsTable.documentId, doc.id))
+    .orderBy(asc(reglementsTable.date));
+  let relatedDocumentNumero: string | null = null;
+  if (doc.relatedDocumentId) {
+    const [rel] = await db
+      .select({ numero: documentsTable.numero })
+      .from(documentsTable)
+      .where(eq(documentsTable.id, doc.relatedDocumentId));
+    relatedDocumentNumero = rel?.numero ?? null;
+  }
+  const totalRegle =
+    Math.round(reglements.reduce((s, r) => s + (r.montant ?? 0), 0) * 100) / 100;
+  const resteAPayer = Math.round((doc.totalTtc - totalRegle) * 100) / 100;
+
   return {
     id: doc.id,
     type: doc.type,
@@ -44,14 +68,19 @@ async function loadDocument(id: number) {
     vendeur: doc.vendeur,
     reference: doc.reference,
     notes: doc.notes,
+    modeReglement: doc.modeReglement,
     lines,
+    reglements,
     totalHt: doc.totalHt,
     totalRemise: doc.totalRemise,
     totalTva: doc.totalTva,
     totalTtc: doc.totalTtc,
+    totalRegle,
+    resteAPayer,
     applyTva: doc.applyTva,
     tvaPourMemoire: doc.tvaPourMemoire,
     relatedDocumentId: doc.relatedDocumentId,
+    relatedDocumentNumero,
     createdAt: doc.createdAt,
   };
 }
@@ -130,6 +159,7 @@ router.post("/documents", async (req, res): Promise<void> => {
       vendeur: parsed.data.vendeur ?? null,
       reference: parsed.data.reference ?? null,
       notes: parsed.data.notes ?? null,
+      modeReglement: parsed.data.modeReglement ?? null,
       applyTva: parsed.data.applyTva,
       tvaPourMemoire: parsed.data.tvaPourMemoire ?? false,
       ...totals,
@@ -152,6 +182,7 @@ router.post("/documents", async (req, res): Promise<void> => {
         unite: line.unite,
         prixUnitaire: line.prixUnitaire,
         remisePct: line.remisePct,
+        tvaRate: line.tvaRate,
         montantHt: computeLineMontantHt(line),
         depot: line.depot ?? null,
         position: idx,
@@ -196,10 +227,25 @@ router.put("/documents/:id", async (req, res): Promise<void> => {
     body.data.tvaPourMemoire ?? false,
   );
 
+  // Si le type change, régénérer le numéro avec le bon préfixe
+  const [existing] = await db
+    .select({ type: documentsTable.type, numero: documentsTable.numero })
+    .from(documentsTable)
+    .where(eq(documentsTable.id, params.data.id));
+  if (!existing) {
+    res.status(404).json({ error: "Document introuvable" });
+    return;
+  }
+  const numero =
+    existing.type !== body.data.type
+      ? await generateNumero(body.data.type)
+      : existing.numero;
+
   const [doc] = await db
     .update(documentsTable)
     .set({
       type: body.data.type,
+      numero,
       status: body.data.status,
       date: body.data.date instanceof Date
         ? body.data.date.toISOString().slice(0, 10)
@@ -213,6 +259,7 @@ router.put("/documents/:id", async (req, res): Promise<void> => {
       vendeur: body.data.vendeur ?? null,
       reference: body.data.reference ?? null,
       notes: body.data.notes ?? null,
+      modeReglement: body.data.modeReglement ?? null,
       applyTva: body.data.applyTva,
       tvaPourMemoire: body.data.tvaPourMemoire ?? false,
       ...totals,
@@ -237,6 +284,7 @@ router.put("/documents/:id", async (req, res): Promise<void> => {
         unite: line.unite,
         prixUnitaire: line.prixUnitaire,
         remisePct: line.remisePct,
+        tvaRate: line.tvaRate,
         montantHt: computeLineMontantHt(line),
         depot: line.depot ?? null,
         position: idx,
@@ -307,6 +355,7 @@ router.post("/documents/:id/convert", async (req, res): Promise<void> => {
     unite: l.unite,
     prixUnitaire: l.prixUnitaire,
     remisePct: l.remisePct,
+    tvaRate: l.tvaRate ?? tvaRate,
     depot: l.depot,
   }));
   const totals = computeTotals(lines, source.applyTva, tvaRate, source.tvaPourMemoire);
@@ -325,7 +374,9 @@ router.post("/documents/:id/convert", async (req, res): Promise<void> => {
       vendeur: source.vendeur,
       reference: source.numero,
       notes: source.notes,
+      modeReglement: source.modeReglement,
       applyTva: source.applyTva,
+      tvaPourMemoire: source.tvaPourMemoire,
       relatedDocumentId: source.id,
       ...totals,
     })
@@ -347,6 +398,7 @@ router.post("/documents/:id/convert", async (req, res): Promise<void> => {
         unite: line.unite,
         prixUnitaire: line.prixUnitaire,
         remisePct: line.remisePct,
+        tvaRate: line.tvaRate,
         montantHt: computeLineMontantHt(line),
         depot: line.depot ?? null,
         position: idx,

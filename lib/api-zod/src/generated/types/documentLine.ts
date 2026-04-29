@@ -15,6 +15,7 @@ export interface DocumentLine {
   unite: string;
   prixUnitaire: number;
   remisePct: number;
+  tvaRate: number;
   montantHt: number;
   depot?: string | null;
 }

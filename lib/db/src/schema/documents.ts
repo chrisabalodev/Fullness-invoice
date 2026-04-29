@@ -24,6 +24,7 @@ export const documentsTable = pgTable("documents", {
   vendeur: text("vendeur"),
   reference: text("reference"),
   notes: text("notes"),
+  modeReglement: text("mode_reglement"),
   totalHt: doublePrecision("total_ht").notNull().default(0),
   totalRemise: doublePrecision("total_remise").notNull().default(0),
   totalTva: doublePrecision("total_tva").notNull().default(0),
@@ -50,10 +51,27 @@ export const documentLinesTable = pgTable("document_lines", {
   unite: text("unite").notNull().default("PIECE"),
   prixUnitaire: doublePrecision("prix_unitaire").notNull().default(0),
   remisePct: doublePrecision("remise_pct").notNull().default(0),
+  tvaRate: doublePrecision("tva_rate").notNull().default(18),
   montantHt: doublePrecision("montant_ht").notNull().default(0),
   depot: text("depot"),
   position: integer("position").notNull().default(0),
 });
 
+export const reglementsTable = pgTable("reglements", {
+  id: serial("id").primaryKey(),
+  documentId: integer("document_id")
+    .notNull()
+    .references(() => documentsTable.id, { onDelete: "cascade" }),
+  date: date("date").notNull(),
+  montant: doublePrecision("montant").notNull().default(0),
+  mode: text("mode").notNull(),
+  reference: text("reference"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 export type DocumentRow = typeof documentsTable.$inferSelect;
 export type DocumentLineRow = typeof documentLinesTable.$inferSelect;
+export type ReglementRow = typeof reglementsTable.$inferSelect;

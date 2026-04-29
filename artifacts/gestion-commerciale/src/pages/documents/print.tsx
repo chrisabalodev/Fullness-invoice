@@ -59,7 +59,6 @@ export default function DocumentPrintPage({ id }: { id: number }) {
     : "Arrêtée la présente facture à la somme de :";
   const doitLabel = isAvoir ? "AVOIR :" : isBL ? "LIVRER A :" : "DOIT :";
 
-  const tvaRate = company.tvaRate ?? 18;
   const totalRound = Math.round(doc.totalTtc);
   const enLettres = numberToFrenchWords(totalRound).trim();
 
@@ -67,6 +66,13 @@ export default function DocumentPrintPage({ id }: { id: number }) {
     .split("\n")
     .map((s) => s.trim())
     .filter(Boolean);
+
+  const tvaLabel =
+    doc.lines.length > 0 && doc.lines.every((l) => l.tvaRate === doc.lines[0]?.tvaRate)
+      ? `${doc.lines[0]?.tvaRate ?? company.tvaRate ?? 18}%`
+      : "";
+  const showReglements = (doc.type === "facture" || doc.type === "facture_proforma")
+    && doc.reglements.length > 0;
 
   return (
     <>
@@ -103,6 +109,9 @@ export default function DocumentPrintPage({ id }: { id: number }) {
           <div className="title-text">{title}</div>
           <div className="title-meta">
             <span>N° : <strong>{doc.numero}</strong></span>
+            {doc.relatedDocumentNumero && (
+              <span>Issu de : <strong>{doc.relatedDocumentNumero}</strong></span>
+            )}
             {doc.echeance && (
               <span>Échéance : <strong>{formatDate(doc.echeance)}</strong></span>
             )}
@@ -134,6 +143,7 @@ export default function DocumentPrintPage({ id }: { id: number }) {
               {showPrices && (
                 <>
                   <th className="col-num">PRIX HT</th>
+                  <th className="col-num">TVA%</th>
                   <th className="col-num">PRIX TTC</th>
                   <th className="col-num">R(%)</th>
                   <th className="col-num">MONTANT HT</th>
@@ -143,9 +153,10 @@ export default function DocumentPrintPage({ id }: { id: number }) {
           </thead>
           <tbody>
             {doc.lines.map((l) => {
-              const prixTtc = doc.tvaPourMemoire
-                ? l.prixUnitaire
-                : l.prixUnitaire * (1 + tvaRate / 100);
+              const prixTtc =
+                doc.tvaPourMemoire || !doc.applyTva
+                  ? l.prixUnitaire
+                  : l.prixUnitaire * (1 + (l.tvaRate ?? 0) / 100);
               return (
                 <tr key={l.id}>
                   <td className="col-ref mono">{l.reference}</td>
@@ -156,6 +167,7 @@ export default function DocumentPrintPage({ id }: { id: number }) {
                   {showPrices && (
                     <>
                       <td className="col-num">{formatMoneyDecimal(l.prixUnitaire)}</td>
+                      <td className="col-num">{formatMoney(l.tvaRate)}</td>
                       <td className="col-num">{formatMoneyDecimal(prixTtc)}</td>
                       <td className="col-num">{formatMoney(l.remisePct)}</td>
                       <td className="col-num">{formatMoneyDecimal(l.montantHt)}</td>
@@ -166,7 +178,7 @@ export default function DocumentPrintPage({ id }: { id: number }) {
             })}
             {Array.from({ length: Math.max(0, 12 - doc.lines.length) }).map((_, i) => (
               <tr key={`spacer-${i}`} className="spacer">
-                <td colSpan={isBL ? 5 : 8}>&nbsp;</td>
+                <td colSpan={isBL ? 5 : 9}>&nbsp;</td>
               </tr>
             ))}
           </tbody>
@@ -182,7 +194,33 @@ export default function DocumentPrintPage({ id }: { id: number }) {
               <div className="meta-line">
                 {doc.vendeur && <span>Vendeur : {doc.vendeur}</span>}
                 {doc.reference && <span>REF : {doc.reference}</span>}
+                {doc.modeReglement && <span>Mode : {doc.modeReglement}</span>}
               </div>
+              {showReglements && (
+                <div className="reglements-box">
+                  <div className="reglements-title">RÈGLEMENTS REÇUS</div>
+                  <table className="reglements-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Mode</th>
+                        <th>Référence</th>
+                        <th className="right">Montant</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {doc.reglements.map((r) => (
+                        <tr key={r.id}>
+                          <td>{formatDate(r.date)}</td>
+                          <td>{r.mode}</td>
+                          <td>{r.reference ?? ""}</td>
+                          <td className="right">{formatMoneyDecimal(r.montant)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
             <div className="totals-box">
               <div className="totals-row">
@@ -196,8 +234,8 @@ export default function DocumentPrintPage({ id }: { id: number }) {
               <div className="totals-row">
                 <span>
                   {doc.tvaPourMemoire
-                    ? `TVA ${tvaRate}% pour mémoire (F CFA)`
-                    : `Total TVA ${tvaRate}% (F CFA)`}
+                    ? `TVA ${tvaLabel} pour mémoire (F CFA)`
+                    : `Total TVA ${tvaLabel} (F CFA)`}
                 </span>
                 <span className="num">{formatMoneyDecimal(doc.totalTva)}</span>
               </div>
@@ -384,6 +422,25 @@ const PRINT_CSS = `
   }
   .num { font-family: 'Courier New', monospace; tabular-nums: true; }
   .memo-mention { padding: 4px 10px; font-size: 8pt; font-style: italic; color: #444; border-top: 1px solid #999; }
+
+  .reglements-box { margin-top: 8px; border: 1px solid #000; }
+  .reglements-title {
+    background: #f0f0f0;
+    padding: 3px 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 8.5pt;
+    border-bottom: 1px solid #000;
+  }
+  .reglements-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+  .reglements-table th, .reglements-table td {
+    padding: 2px 6px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+  }
+  .reglements-table thead th { font-weight: 700; background: #f8f8f8; }
+  .reglements-table .right { text-align: right; font-family: 'Courier New', monospace; }
+  .reglements-table tbody tr:last-child td { border-bottom: none; }
 
   .signature-row {
     display: grid;

@@ -13,6 +13,7 @@ export interface UpdateCompanyBody {
   fiscalNumber: string;
   rccm: string;
   bankAccounts: string;
+  modesReglement: string;
   comptoirName: string;
   comptoirCity: string;
   comptoirPhone: string;

@@ -15,6 +15,8 @@ export interface Company {
   rccm: string;
   /** Comptes bancaires (texte libre) */
   bankAccounts: string;
+  /** Modes de règlement (un par ligne) */
+  modesReglement: string;
   comptoirName: string;
   comptoirCity: string;
   comptoirPhone: string;

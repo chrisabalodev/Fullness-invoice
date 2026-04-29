@@ -39,6 +39,8 @@ export interface Company {
   rccm: string;
   /** Comptes bancaires (texte libre) */
   bankAccounts: string;
+  /** Modes de règlement (un par ligne) */
+  modesReglement: string;
   comptoirName: string;
   comptoirCity: string;
   comptoirPhone: string;
@@ -54,6 +56,7 @@ export interface UpdateCompanyBody {
   fiscalNumber: string;
   rccm: string;
   bankAccounts: string;
+  modesReglement: string;
   comptoirName: string;
   comptoirCity: string;
   comptoirPhone: string;
@@ -115,6 +118,7 @@ export interface DocumentLine {
   unite: string;
   prixUnitaire: number;
   remisePct: number;
+  tvaRate: number;
   montantHt: number;
   depot?: string | null;
 }
@@ -127,7 +131,19 @@ export interface CreateDocumentLineBody {
   unite: string;
   prixUnitaire: number;
   remisePct: number;
+  tvaRate: number;
   depot?: string | null;
+}
+
+export interface Reglement {
+  id: number;
+  documentId: number;
+  date: string;
+  montant: number;
+  mode: string;
+  reference?: string | null;
+  notes?: string | null;
+  createdAt: string;
 }
 
 export interface Document {
@@ -142,14 +158,19 @@ export interface Document {
   vendeur?: string | null;
   reference?: string | null;
   notes?: string | null;
+  modeReglement?: string | null;
   lines: DocumentLine[];
+  reglements: Reglement[];
   totalHt: number;
   totalRemise: number;
   totalTva: number;
   totalTtc: number;
+  totalRegle: number;
+  resteAPayer: number;
   applyTva: boolean;
   tvaPourMemoire: boolean;
   relatedDocumentId?: number | null;
+  relatedDocumentNumero?: string | null;
   createdAt: string;
 }
 
@@ -174,10 +195,19 @@ export interface CreateDocumentBody {
   vendeur?: string | null;
   reference?: string | null;
   notes?: string | null;
+  modeReglement?: string | null;
   applyTva: boolean;
   tvaPourMemoire?: boolean;
   status: DocumentStatus;
   lines: CreateDocumentLineBody[];
+}
+
+export interface CreateReglementBody {
+  date: string;
+  montant: number;
+  mode: string;
+  reference?: string | null;
+  notes?: string | null;
 }
 
 export interface UpdateDocumentStatusBody {

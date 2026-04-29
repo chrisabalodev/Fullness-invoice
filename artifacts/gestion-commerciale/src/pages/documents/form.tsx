@@ -62,6 +62,7 @@ interface LineFormValues {
   unite: string;
   prixUnitaire: number;
   remisePct: number;
+  tvaRate: number;
   depot?: string | null;
 }
 
@@ -74,6 +75,7 @@ interface DocumentFormValues {
   vendeur?: string | null;
   reference?: string | null;
   notes?: string | null;
+  modeReglement?: string | null;
   applyTva: boolean;
   tvaPourMemoire: boolean;
   lines: LineFormValues[];
@@ -88,7 +90,7 @@ interface QuickClientValues {
   fiscalNumber?: string;
 }
 
-function emptyLine(): LineFormValues {
+function emptyLine(defaultTva = 18): LineFormValues {
   return {
     reference: "",
     designation: "",
@@ -96,6 +98,7 @@ function emptyLine(): LineFormValues {
     unite: "PIECE",
     prixUnitaire: 0,
     remisePct: 0,
+    tvaRate: defaultTva,
     articleId: null,
     depot: null,
   };
@@ -111,6 +114,13 @@ export default function DocumentFormPage({ id }: { id?: number }) {
   const editing = id != null;
   const { data: existing } = useGetDocument(id ?? 0);
 
+  const modesReglementOptions = useMemo(() => {
+    return (company?.modesReglement ?? "")
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }, [company?.modesReglement]);
+
   const { register, handleSubmit, control, watch, reset, setValue, formState } =
     useForm<DocumentFormValues>({
       defaultValues: {
@@ -121,9 +131,10 @@ export default function DocumentFormPage({ id }: { id?: number }) {
         vendeur: "",
         reference: "",
         notes: "",
+        modeReglement: "",
         applyTva: true,
         tvaPourMemoire: false,
-        lines: [emptyLine()],
+        lines: [emptyLine(tvaRate)],
       },
     });
 
@@ -140,6 +151,7 @@ export default function DocumentFormPage({ id }: { id?: number }) {
         vendeur: existing.vendeur ?? "",
         reference: existing.reference ?? "",
         notes: existing.notes ?? "",
+        modeReglement: existing.modeReglement ?? "",
         applyTva: existing.applyTva,
         tvaPourMemoire: existing.tvaPourMemoire ?? false,
         lines:
@@ -152,12 +164,13 @@ export default function DocumentFormPage({ id }: { id?: number }) {
                 unite: l.unite,
                 prixUnitaire: l.prixUnitaire,
                 remisePct: l.remisePct,
+                tvaRate: l.tvaRate ?? tvaRate,
                 depot: l.depot ?? null,
               }))
-            : [emptyLine()],
+            : [emptyLine(tvaRate)],
       });
     }
-  }, [editing, existing, reset]);
+  }, [editing, existing, reset, tvaRate]);
 
   const watchedLines = watch("lines");
   const watchedApplyTva = watch("applyTva");
@@ -167,19 +180,22 @@ export default function DocumentFormPage({ id }: { id?: number }) {
   const totals = useMemo(() => {
     let totalHt = 0;
     let totalRemise = 0;
+    let totalTva = 0;
     for (const l of watchedLines) {
       const q = Number(l.quantite) || 0;
       const p = Number(l.prixUnitaire) || 0;
       const r = Number(l.remisePct) || 0;
+      const t = Number(l.tvaRate) || 0;
       const base = q * p;
       const remise = base * (r / 100);
-      totalHt += base - remise;
+      const ht = base - remise;
+      totalHt += ht;
       totalRemise += remise;
+      if (watchedApplyTva) totalTva += ht * (t / 100);
     }
-    const totalTva = watchedApplyTva ? totalHt * (tvaRate / 100) : 0;
     const totalTtc = watchedMemoire ? totalHt : totalHt + totalTva;
     return { totalHt, totalRemise, totalTva, totalTtc };
-  }, [watchedLines, watchedApplyTva, watchedMemoire, tvaRate]);
+  }, [watchedLines, watchedApplyTva, watchedMemoire]);
 
   const create = useCreateDocument({
     mutation: {
@@ -233,6 +249,7 @@ export default function DocumentFormPage({ id }: { id?: number }) {
       vendeur: v.vendeur || null,
       reference: v.reference || null,
       notes: v.notes || null,
+      modeReglement: v.modeReglement || null,
       applyTva: v.applyTva,
       tvaPourMemoire: v.tvaPourMemoire,
       lines: v.lines
@@ -245,6 +262,7 @@ export default function DocumentFormPage({ id }: { id?: number }) {
           unite: l.unite,
           prixUnitaire: Number(l.prixUnitaire),
           remisePct: Number(l.remisePct),
+          tvaRate: Number(l.tvaRate) || 0,
           depot: l.depot ?? null,
         })),
     };
@@ -318,7 +336,6 @@ export default function DocumentFormPage({ id }: { id?: number }) {
                         setValue("status", (allowed[0] ?? "brouillon") as DocumentStatus);
                       }
                     }}
-                    disabled={editing}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -402,6 +419,44 @@ export default function DocumentFormPage({ id }: { id?: number }) {
               />
             </div>
             <div className="col-span-2">
+              <Label htmlFor="modeReglement">Mode de règlement</Label>
+              <Controller
+                control={control}
+                name="modeReglement"
+                render={({ field }) => (
+                  <div className="flex gap-2">
+                    <Select
+                      value={field.value ?? ""}
+                      onValueChange={(v) => field.onChange(v === "__clear__" ? "" : v)}
+                    >
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="— Choisir —" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__clear__">— Aucun —</SelectItem>
+                        {modesReglementOptions.map((m) => (
+                          <SelectItem key={m} value={m}>
+                            {m}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      className="flex-1"
+                      placeholder="Ou saisir librement…"
+                      value={field.value ?? ""}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    />
+                  </div>
+                )}
+              />
+              {modesReglementOptions.length === 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Configurez les modes dans Paramètres pour les retrouver dans la liste.
+                </p>
+              )}
+            </div>
+            <div className="col-span-2">
               <Label htmlFor="notes">Notes</Label>
               <Textarea id="notes" rows={2} {...register("notes")} />
             </div>
@@ -460,7 +515,7 @@ export default function DocumentFormPage({ id }: { id?: number }) {
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => append(emptyLine())}
+            onClick={() => append(emptyLine(tvaRate))}
           >
             <Plus className="w-4 h-4 mr-2" /> Ajouter une ligne
           </Button>
@@ -469,13 +524,15 @@ export default function DocumentFormPage({ id }: { id?: number }) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[150px]">Article</TableHead>
+                <TableHead className="w-[180px]">Article</TableHead>
+                <TableHead className="w-[130px]">Référence</TableHead>
                 <TableHead>Désignation</TableHead>
-                <TableHead className="w-[80px]">Qté</TableHead>
+                <TableHead className="w-[70px]">Qté</TableHead>
                 <TableHead className="w-[80px]">Unité</TableHead>
                 <TableHead className="w-[110px]">Prix HT</TableHead>
-                <TableHead className="w-[110px] text-right">Prix TTC</TableHead>
-                <TableHead className="w-[80px]">R %</TableHead>
+                <TableHead className="w-[80px]">TVA %</TableHead>
+                <TableHead className="w-[110px]">Prix TTC</TableHead>
+                <TableHead className="w-[70px]">R %</TableHead>
                 <TableHead className="w-[120px] text-right">Montant HT</TableHead>
                 <TableHead className="w-[40px]"></TableHead>
               </TableRow>
@@ -486,20 +543,23 @@ export default function DocumentFormPage({ id }: { id?: number }) {
                 const qty = Number(l?.quantite) || 0;
                 const pu = Number(l?.prixUnitaire) || 0;
                 const rem = Number(l?.remisePct) || 0;
+                const tva = Number(l?.tvaRate) || 0;
                 const montant = qty * pu * (1 - rem / 100);
-                const prixTtc = watchedMemoire ? pu : pu * (1 + tvaRate / 100);
+                const prixTtc =
+                  watchedMemoire || !watchedApplyTva ? pu : pu * (1 + tva / 100);
                 return (
                   <TableRow key={f.id}>
                     <TableCell>
-                      <Controller
-                        control={control}
-                        name={`lines.${idx}.reference`}
-                        render={({ field }) => (
-                          <ArticleCombobox
-                            value={field.value}
-                            onSelect={(a) => handlePickArticle(idx, a)}
-                          />
-                        )}
+                      <ArticleCombobox
+                        value={l?.reference ?? ""}
+                        onSelect={(a) => handlePickArticle(idx, a)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        {...register(`lines.${idx}.reference`)}
+                        className="h-9"
+                        placeholder="Réf."
                       />
                     </TableCell>
                     <TableCell>
@@ -524,8 +584,34 @@ export default function DocumentFormPage({ id }: { id?: number }) {
                         className="h-9 text-right tabular-nums"
                       />
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">
-                      {formatMoney(prixTtc)}
+                    <TableCell>
+                      <Input
+                        type="number"
+                        step="any"
+                        {...register(`lines.${idx}.tvaRate`, { valueAsNumber: true })}
+                        className="h-9 text-right tabular-nums"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        step="any"
+                        value={Number.isFinite(prixTtc) ? Math.round(prixTtc * 100) / 100 : 0}
+                        onChange={(e) => {
+                          const newTtc = Number(e.target.value) || 0;
+                          const t = Number(l?.tvaRate) || 0;
+                          const newHt =
+                            watchedMemoire || !watchedApplyTva
+                              ? newTtc
+                              : newTtc / (1 + t / 100);
+                          setValue(
+                            `lines.${idx}.prixUnitaire`,
+                            Math.round(newHt * 100) / 100,
+                            { shouldDirty: true },
+                          );
+                        }}
+                        className="h-9 text-right tabular-nums"
+                      />
                     </TableCell>
                     <TableCell>
                       <Input

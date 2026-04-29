@@ -17,6 +17,7 @@ export interface CreateDocumentBody {
   vendeur?: string | null;
   reference?: string | null;
   notes?: string | null;
+  modeReglement?: string | null;
   applyTva: boolean;
   tvaPourMemoire?: boolean;
   status: DocumentStatus;

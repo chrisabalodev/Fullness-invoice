@@ -9,6 +9,7 @@ import type { Client } from "./client";
 import type { DocumentLine } from "./documentLine";
 import type { DocumentStatus } from "./documentStatus";
 import type { DocumentType } from "./documentType";
+import type { Reglement } from "./reglement";
 
 export interface Document {
   id: number;
@@ -22,13 +23,18 @@ export interface Document {
   vendeur?: string | null;
   reference?: string | null;
   notes?: string | null;
+  modeReglement?: string | null;
   lines: DocumentLine[];
+  reglements: Reglement[];
   totalHt: number;
   totalRemise: number;
   totalTva: number;
   totalTtc: number;
+  totalRegle: number;
+  resteAPayer: number;
   applyTva: boolean;
   tvaPourMemoire: boolean;
   relatedDocumentId?: number | null;
+  relatedDocumentNumero?: string | null;
   createdAt: Date;
 }

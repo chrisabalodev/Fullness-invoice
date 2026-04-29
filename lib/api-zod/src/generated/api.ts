@@ -25,6 +25,7 @@ export const GetCompanyResponse = zod.object({
   fiscalNumber: zod.string(),
   rccm: zod.string(),
   bankAccounts: zod.string().describe("Comptes bancaires (texte libre)"),
+  modesReglement: zod.string().describe("Modes de règlement (un par ligne)"),
   comptoirName: zod.string(),
   comptoirCity: zod.string(),
   comptoirPhone: zod.string(),
@@ -43,6 +44,7 @@ export const UpdateCompanyBody = zod.object({
   fiscalNumber: zod.string(),
   rccm: zod.string(),
   bankAccounts: zod.string(),
+  modesReglement: zod.string(),
   comptoirName: zod.string(),
   comptoirCity: zod.string(),
   comptoirPhone: zod.string(),
@@ -59,6 +61,7 @@ export const UpdateCompanyResponse = zod.object({
   fiscalNumber: zod.string(),
   rccm: zod.string(),
   bankAccounts: zod.string().describe("Comptes bancaires (texte libre)"),
+  modesReglement: zod.string().describe("Modes de règlement (un par ligne)"),
   comptoirName: zod.string(),
   comptoirCity: zod.string(),
   comptoirPhone: zod.string(),
@@ -273,6 +276,7 @@ export const CreateDocumentBody = zod.object({
   vendeur: zod.string().nullish(),
   reference: zod.string().nullish(),
   notes: zod.string().nullish(),
+  modeReglement: zod.string().nullish(),
   applyTva: zod.boolean(),
   tvaPourMemoire: zod.boolean().optional(),
   status: zod.enum(["brouillon", "valide", "livre", "paye", "annule"]),
@@ -285,6 +289,7 @@ export const CreateDocumentBody = zod.object({
       unite: zod.string(),
       prixUnitaire: zod.number(),
       remisePct: zod.number(),
+      tvaRate: zod.number(),
       depot: zod.string().nullish(),
     }),
   ),
@@ -323,6 +328,7 @@ export const GetDocumentResponse = zod.object({
   vendeur: zod.string().nullish(),
   reference: zod.string().nullish(),
   notes: zod.string().nullish(),
+  modeReglement: zod.string().nullish(),
   lines: zod.array(
     zod.object({
       id: zod.number(),
@@ -333,17 +339,33 @@ export const GetDocumentResponse = zod.object({
       unite: zod.string(),
       prixUnitaire: zod.number(),
       remisePct: zod.number(),
+      tvaRate: zod.number(),
       montantHt: zod.number(),
       depot: zod.string().nullish(),
+    }),
+  ),
+  reglements: zod.array(
+    zod.object({
+      id: zod.number(),
+      documentId: zod.number(),
+      date: zod.coerce.date(),
+      montant: zod.number(),
+      mode: zod.string(),
+      reference: zod.string().nullish(),
+      notes: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
     }),
   ),
   totalHt: zod.number(),
   totalRemise: zod.number(),
   totalTva: zod.number(),
   totalTtc: zod.number(),
+  totalRegle: zod.number(),
+  resteAPayer: zod.number(),
   applyTva: zod.boolean(),
   tvaPourMemoire: zod.boolean(),
   relatedDocumentId: zod.number().nullish(),
+  relatedDocumentNumero: zod.string().nullish(),
   createdAt: zod.coerce.date(),
 });
 
@@ -365,6 +387,7 @@ export const UpdateDocumentBody = zod.object({
   vendeur: zod.string().nullish(),
   reference: zod.string().nullish(),
   notes: zod.string().nullish(),
+  modeReglement: zod.string().nullish(),
   applyTva: zod.boolean(),
   tvaPourMemoire: zod.boolean().optional(),
   status: zod.enum(["brouillon", "valide", "livre", "paye", "annule"]),
@@ -377,6 +400,7 @@ export const UpdateDocumentBody = zod.object({
       unite: zod.string(),
       prixUnitaire: zod.number(),
       remisePct: zod.number(),
+      tvaRate: zod.number(),
       depot: zod.string().nullish(),
     }),
   ),
@@ -411,6 +435,7 @@ export const UpdateDocumentResponse = zod.object({
   vendeur: zod.string().nullish(),
   reference: zod.string().nullish(),
   notes: zod.string().nullish(),
+  modeReglement: zod.string().nullish(),
   lines: zod.array(
     zod.object({
       id: zod.number(),
@@ -421,17 +446,33 @@ export const UpdateDocumentResponse = zod.object({
       unite: zod.string(),
       prixUnitaire: zod.number(),
       remisePct: zod.number(),
+      tvaRate: zod.number(),
       montantHt: zod.number(),
       depot: zod.string().nullish(),
+    }),
+  ),
+  reglements: zod.array(
+    zod.object({
+      id: zod.number(),
+      documentId: zod.number(),
+      date: zod.coerce.date(),
+      montant: zod.number(),
+      mode: zod.string(),
+      reference: zod.string().nullish(),
+      notes: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
     }),
   ),
   totalHt: zod.number(),
   totalRemise: zod.number(),
   totalTva: zod.number(),
   totalTtc: zod.number(),
+  totalRegle: zod.number(),
+  resteAPayer: zod.number(),
   applyTva: zod.boolean(),
   tvaPourMemoire: zod.boolean(),
   relatedDocumentId: zod.number().nullish(),
+  relatedDocumentNumero: zod.string().nullish(),
   createdAt: zod.coerce.date(),
 });
 
@@ -479,6 +520,7 @@ export const UpdateDocumentStatusResponse = zod.object({
   vendeur: zod.string().nullish(),
   reference: zod.string().nullish(),
   notes: zod.string().nullish(),
+  modeReglement: zod.string().nullish(),
   lines: zod.array(
     zod.object({
       id: zod.number(),
@@ -489,18 +531,75 @@ export const UpdateDocumentStatusResponse = zod.object({
       unite: zod.string(),
       prixUnitaire: zod.number(),
       remisePct: zod.number(),
+      tvaRate: zod.number(),
       montantHt: zod.number(),
       depot: zod.string().nullish(),
+    }),
+  ),
+  reglements: zod.array(
+    zod.object({
+      id: zod.number(),
+      documentId: zod.number(),
+      date: zod.coerce.date(),
+      montant: zod.number(),
+      mode: zod.string(),
+      reference: zod.string().nullish(),
+      notes: zod.string().nullish(),
+      createdAt: zod.coerce.date(),
     }),
   ),
   totalHt: zod.number(),
   totalRemise: zod.number(),
   totalTva: zod.number(),
   totalTtc: zod.number(),
+  totalRegle: zod.number(),
+  resteAPayer: zod.number(),
   applyTva: zod.boolean(),
   tvaPourMemoire: zod.boolean(),
   relatedDocumentId: zod.number().nullish(),
+  relatedDocumentNumero: zod.string().nullish(),
   createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Lister les règlements d'un document
+ */
+export const ListReglementsParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ListReglementsResponseItem = zod.object({
+  id: zod.number(),
+  documentId: zod.number(),
+  date: zod.coerce.date(),
+  montant: zod.number(),
+  mode: zod.string(),
+  reference: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.coerce.date(),
+});
+export const ListReglementsResponse = zod.array(ListReglementsResponseItem);
+
+/**
+ * @summary Ajouter un règlement à un document
+ */
+export const CreateReglementParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const CreateReglementBody = zod.object({
+  date: zod.coerce.date(),
+  montant: zod.number(),
+  mode: zod.string(),
+  reference: zod.string().nullish(),
+  notes: zod.string().nullish(),
+});
+
+/**
+ * @summary Supprimer un règlement
+ */
+export const DeleteReglementParams = zod.object({
+  id: zod.coerce.number(),
 });
 
 /**
