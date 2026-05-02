@@ -111,6 +111,7 @@ export default function DocumentFormPage({ id }: { id?: number }) {
   const { data: company } = useGetCompany();
   const tvaRate = company?.tvaRate ?? 18;
   const [clientDialogOpen, setClientDialogOpen] = useState(false);
+  const [designEdit, setDesignEdit] = useState<{ idx: number; value: string } | null>(null);
 
   const editing = id != null;
   const { data: existing } = useGetDocument(id ?? 0);
@@ -434,73 +435,50 @@ export default function DocumentFormPage({ id }: { id?: number }) {
               <Controller
                 control={control}
                 name="modeReglement"
-                render={({ field }) => {
-                  const inList = modesReglementOptions.includes(field.value ?? "");
-                  return (
-                    <div className="space-y-1">
-                      {modesReglementOptions.length > 0 && (
-                        <Select
-                          value={inList ? (field.value ?? "") : ""}
-                          onValueChange={(v) =>
-                            field.onChange(v === "__clear__" ? "" : v)
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="— Choisir un mode —" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__clear__">— Aucun —</SelectItem>
-                            {modesReglementOptions.map((m) => (
-                              <SelectItem key={m} value={m}>{m}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                      <Input
-                        placeholder="Ou saisir librement…"
-                        value={field.value ?? ""}
-                        onChange={(e) => field.onChange(e.target.value)}
-                      />
-                    </div>
-                  );
-                }}
+                render={({ field }) => (
+                  <Select
+                    value={field.value ?? ""}
+                    onValueChange={(v) => field.onChange(v === "__clear__" ? "" : v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="— Choisir un mode —" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__clear__">— Aucun —</SelectItem>
+                      {modesReglementOptions.map((m) => (
+                        <SelectItem key={m} value={m}>{m}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               />
+              {modesReglementOptions.length === 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Configurez les modes dans Paramètres pour les retrouver ici.
+                </p>
+              )}
             </div>
             <div>
               <Label htmlFor="conditionsPaiement">Conditions de paiement</Label>
               <Controller
                 control={control}
                 name="conditionsPaiement"
-                render={({ field }) => {
-                  const inList = conditionsPaiementOptions.includes(field.value ?? "");
-                  return (
-                    <div className="space-y-1">
-                      {conditionsPaiementOptions.length > 0 && (
-                        <Select
-                          value={inList ? (field.value ?? "") : ""}
-                          onValueChange={(v) =>
-                            field.onChange(v === "__clear__" ? "" : v)
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="— Choisir des conditions —" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__clear__">— Aucune —</SelectItem>
-                            {conditionsPaiementOptions.map((c) => (
-                              <SelectItem key={c} value={c}>{c}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                      <Input
-                        placeholder="Ou saisir librement…"
-                        value={field.value ?? ""}
-                        onChange={(e) => field.onChange(e.target.value)}
-                      />
-                    </div>
-                  );
-                }}
+                render={({ field }) => (
+                  <Select
+                    value={field.value ?? ""}
+                    onValueChange={(v) => field.onChange(v === "__clear__" ? "" : v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="— Choisir des conditions —" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__clear__">— Aucune —</SelectItem>
+                      {conditionsPaiementOptions.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               />
               {conditionsPaiementOptions.length === 0 && (
                 <p className="text-xs text-muted-foreground mt-1">
@@ -615,7 +593,24 @@ export default function DocumentFormPage({ id }: { id?: number }) {
                       />
                     </TableCell>
                     <TableCell>
-                      <Input {...register(`lines.${idx}.designation`)} className="h-9" />
+                      <Controller
+                        control={control}
+                        name={`lines.${idx}.designation`}
+                        render={({ field }) => (
+                          <button
+                            type="button"
+                            onClick={() => setDesignEdit({ idx, value: field.value ?? "" })}
+                            className="w-full h-9 px-3 text-left text-sm border border-input rounded-md bg-background hover:bg-muted/50 truncate"
+                            title={field.value || "Cliquer pour saisir la désignation"}
+                          >
+                            {field.value ? (
+                              <span className="truncate">{field.value}</span>
+                            ) : (
+                              <span className="text-muted-foreground">Désignation…</span>
+                            )}
+                          </button>
+                        )}
+                      />
                     </TableCell>
                     <TableCell>
                       <Input
@@ -712,6 +707,48 @@ export default function DocumentFormPage({ id }: { id?: number }) {
         }
         loading={createClient.isPending}
       />
+
+      <Dialog
+        open={designEdit !== null}
+        onOpenChange={(o) => { if (!o) setDesignEdit(null); }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Désignation</DialogTitle>
+            <DialogDescription>
+              Saisissez la désignation de l'article. Vous pouvez écrire sur plusieurs lignes.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            rows={6}
+            className="resize-y"
+            autoFocus
+            value={designEdit?.value ?? ""}
+            onChange={(e) =>
+              setDesignEdit((prev) => prev ? { ...prev, value: e.target.value } : prev)
+            }
+            placeholder="Description de l'article ou de la prestation…"
+          />
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setDesignEdit(null)}>
+              Annuler
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                if (designEdit !== null) {
+                  setValue(`lines.${designEdit.idx}.designation`, designEdit.value, {
+                    shouldDirty: true,
+                  });
+                  setDesignEdit(null);
+                }
+              }}
+            >
+              Confirmer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 }
