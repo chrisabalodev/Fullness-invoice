@@ -143,42 +143,34 @@ export default function DocumentPrintPage({ id }: { id: number }) {
               {showPrices && (
                 <>
                   <th className="col-num">PRIX HT</th>
-                  <th className="col-num">TVA%</th>
-                  <th className="col-num">PRIX TTC</th>
                   <th className="col-num">R(%)</th>
                   <th className="col-num">MONTANT HT</th>
+                  <th className="col-num">TVA%</th>
                 </>
               )}
             </tr>
           </thead>
           <tbody>
-            {doc.lines.map((l) => {
-              const prixTtc =
-                doc.tvaPourMemoire || !doc.applyTva
-                  ? l.prixUnitaire
-                  : l.prixUnitaire * (1 + (l.tvaRate ?? 0) / 100);
-              return (
-                <tr key={l.id}>
-                  <td className="col-ref mono">{l.reference}</td>
-                  <td className="col-des">{l.designation}</td>
-                  <td className="col-num">{formatMoney(l.quantite)}</td>
-                  <td className="col-num">{l.unite}</td>
-                  {isBL && <td className="col-num">{l.depot ?? ""}</td>}
-                  {showPrices && (
-                    <>
-                      <td className="col-num">{formatMoneyDecimal(l.prixUnitaire)}</td>
-                      <td className="col-num">{formatMoney(l.tvaRate)}</td>
-                      <td className="col-num">{formatMoneyDecimal(prixTtc)}</td>
-                      <td className="col-num">{formatMoney(l.remisePct)}</td>
-                      <td className="col-num">{formatMoneyDecimal(l.montantHt)}</td>
-                    </>
-                  )}
-                </tr>
-              );
-            })}
+            {doc.lines.map((l) => (
+              <tr key={l.id}>
+                <td className="col-ref mono">{l.reference}</td>
+                <td className="col-des">{l.designation}</td>
+                <td className="col-num">{formatMoney(l.quantite)}</td>
+                <td className="col-num">{l.unite}</td>
+                {isBL && <td className="col-num">{l.depot ?? ""}</td>}
+                {showPrices && (
+                  <>
+                    <td className="col-num">{formatMoneyDecimal(l.prixUnitaire)}</td>
+                    <td className="col-num">{formatMoney(l.remisePct)}</td>
+                    <td className="col-num">{formatMoneyDecimal(l.montantHt)}</td>
+                    <td className="col-num">{l.tvaRate}</td>
+                  </>
+                )}
+              </tr>
+            ))}
             {Array.from({ length: Math.max(0, 12 - doc.lines.length) }).map((_, i) => (
               <tr key={`spacer-${i}`} className="spacer">
-                <td colSpan={isBL ? 5 : 9}>&nbsp;</td>
+                <td colSpan={isBL ? 5 : 8}>&nbsp;</td>
               </tr>
             ))}
           </tbody>
