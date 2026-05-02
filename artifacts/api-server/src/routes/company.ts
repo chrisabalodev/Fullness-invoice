@@ -37,6 +37,8 @@ function serialize(row: NonNullable<Awaited<ReturnType<typeof getOrCreateCompany
     fiscalNumber: row.fiscalNumber,
     rccm: row.rccm,
     bankAccounts: row.bankAccounts,
+    modesReglement: row.modesReglement ?? "",
+    conditionsPaiement: row.conditionsPaiement ?? "",
     comptoirName: row.comptoirName,
     comptoirCity: row.comptoirCity,
     comptoirPhone: row.comptoirPhone,

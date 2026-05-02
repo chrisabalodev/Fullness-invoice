@@ -17,6 +17,8 @@ export interface Company {
   bankAccounts: string;
   /** Modes de règlement (un par ligne) */
   modesReglement: string;
+  /** Conditions de paiement prédéfinies (une par ligne) */
+  conditionsPaiement: string;
   comptoirName: string;
   comptoirCity: string;
   comptoirPhone: string;

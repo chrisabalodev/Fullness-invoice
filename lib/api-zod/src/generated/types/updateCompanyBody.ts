@@ -14,6 +14,7 @@ export interface UpdateCompanyBody {
   rccm: string;
   bankAccounts: string;
   modesReglement: string;
+  conditionsPaiement: string;
   comptoirName: string;
   comptoirCity: string;
   comptoirPhone: string;

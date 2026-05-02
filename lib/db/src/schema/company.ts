@@ -15,6 +15,7 @@ export const companyTable = pgTable("company", {
   rccm: text("rccm").notNull(),
   bankAccounts: text("bank_accounts").notNull(),
   modesReglement: text("modes_reglement").notNull().default(""),
+  conditionsPaiement: text("conditions_paiement").notNull().default(""),
   comptoirName: text("comptoir_name").notNull(),
   comptoirCity: text("comptoir_city").notNull(),
   comptoirPhone: text("comptoir_phone").notNull(),

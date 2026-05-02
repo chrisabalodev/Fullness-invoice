@@ -526,6 +526,9 @@ components:
         modesReglement:
           type: string
           description: Modes de règlement (un par ligne)
+        conditionsPaiement:
+          type: string
+          description: Conditions de paiement prédéfinies (une par ligne)
         comptoirName:
           type: string
         comptoirCity:
@@ -540,7 +543,7 @@ components:
         legalFooter:
           type: string
       required:
-        [id, name, address, phone, fiscalNumber, rccm, bankAccounts, modesReglement, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter]
+        [id, name, address, phone, fiscalNumber, rccm, bankAccounts, modesReglement, conditionsPaiement, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter]
 
     UpdateCompanyBody:
       type: object
@@ -559,6 +562,8 @@ components:
           type: string
         modesReglement:
           type: string
+        conditionsPaiement:
+          type: string
         comptoirName:
           type: string
         comptoirCity:
@@ -573,7 +578,7 @@ components:
         legalFooter:
           type: string
       required:
-        [name, address, phone, fiscalNumber, rccm, bankAccounts, modesReglement, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter]
+        [name, address, phone, fiscalNumber, rccm, bankAccounts, modesReglement, conditionsPaiement, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter]
 
     Client:
       type: object
@@ -778,6 +783,9 @@ components:
         modeReglement:
           type: string
           nullable: true
+        conditionsPaiement:
+          type: string
+          nullable: true
         lines:
           type: array
           items:
@@ -874,6 +882,9 @@ components:
           type: string
           nullable: true
         modeReglement:
+          type: string
+          nullable: true
+        conditionsPaiement:
           type: string
           nullable: true
         applyTva:

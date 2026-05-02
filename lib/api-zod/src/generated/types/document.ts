@@ -24,6 +24,7 @@ export interface Document {
   reference?: string | null;
   notes?: string | null;
   modeReglement?: string | null;
+  conditionsPaiement?: string | null;
   lines: DocumentLine[];
   reglements: Reglement[];
   totalHt: number;

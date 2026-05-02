@@ -76,6 +76,7 @@ interface DocumentFormValues {
   reference?: string | null;
   notes?: string | null;
   modeReglement?: string | null;
+  conditionsPaiement?: string | null;
   applyTva: boolean;
   tvaPourMemoire: boolean;
   lines: LineFormValues[];
@@ -121,6 +122,13 @@ export default function DocumentFormPage({ id }: { id?: number }) {
       .filter(Boolean);
   }, [company?.modesReglement]);
 
+  const conditionsPaiementOptions = useMemo(() => {
+    return (company?.conditionsPaiement ?? "")
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }, [company?.conditionsPaiement]);
+
   const { register, handleSubmit, control, watch, reset, setValue, formState } =
     useForm<DocumentFormValues>({
       defaultValues: {
@@ -132,6 +140,7 @@ export default function DocumentFormPage({ id }: { id?: number }) {
         reference: "",
         notes: "",
         modeReglement: "",
+        conditionsPaiement: "",
         applyTva: true,
         tvaPourMemoire: false,
         lines: [emptyLine(tvaRate)],
@@ -152,6 +161,7 @@ export default function DocumentFormPage({ id }: { id?: number }) {
         reference: existing.reference ?? "",
         notes: existing.notes ?? "",
         modeReglement: existing.modeReglement ?? "",
+        conditionsPaiement: existing.conditionsPaiement ?? "",
         applyTva: existing.applyTva,
         tvaPourMemoire: existing.tvaPourMemoire ?? false,
         lines:
@@ -250,6 +260,7 @@ export default function DocumentFormPage({ id }: { id?: number }) {
       reference: v.reference || null,
       notes: v.notes || null,
       modeReglement: v.modeReglement || null,
+      conditionsPaiement: v.conditionsPaiement || null,
       applyTva: v.applyTva,
       tvaPourMemoire: v.tvaPourMemoire,
       lines: v.lines
@@ -418,41 +429,82 @@ export default function DocumentFormPage({ id }: { id?: number }) {
                 placeholder="Bon de commande, référence externe…"
               />
             </div>
-            <div className="col-span-2">
+            <div>
               <Label htmlFor="modeReglement">Mode de règlement</Label>
               <Controller
                 control={control}
                 name="modeReglement"
-                render={({ field }) => (
-                  <div className="flex gap-2">
-                    <Select
-                      value={field.value ?? ""}
-                      onValueChange={(v) => field.onChange(v === "__clear__" ? "" : v)}
-                    >
-                      <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="— Choisir —" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__clear__">— Aucun —</SelectItem>
-                        {modesReglementOptions.map((m) => (
-                          <SelectItem key={m} value={m}>
-                            {m}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      className="flex-1"
-                      placeholder="Ou saisir librement…"
-                      value={field.value ?? ""}
-                      onChange={(e) => field.onChange(e.target.value)}
-                    />
-                  </div>
-                )}
+                render={({ field }) => {
+                  const inList = modesReglementOptions.includes(field.value ?? "");
+                  return (
+                    <div className="space-y-1">
+                      {modesReglementOptions.length > 0 && (
+                        <Select
+                          value={inList ? (field.value ?? "") : ""}
+                          onValueChange={(v) =>
+                            field.onChange(v === "__clear__" ? "" : v)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="— Choisir un mode —" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__clear__">— Aucun —</SelectItem>
+                            {modesReglementOptions.map((m) => (
+                              <SelectItem key={m} value={m}>{m}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      <Input
+                        placeholder="Ou saisir librement…"
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value)}
+                      />
+                    </div>
+                  );
+                }}
               />
-              {modesReglementOptions.length === 0 && (
+            </div>
+            <div>
+              <Label htmlFor="conditionsPaiement">Conditions de paiement</Label>
+              <Controller
+                control={control}
+                name="conditionsPaiement"
+                render={({ field }) => {
+                  const inList = conditionsPaiementOptions.includes(field.value ?? "");
+                  return (
+                    <div className="space-y-1">
+                      {conditionsPaiementOptions.length > 0 && (
+                        <Select
+                          value={inList ? (field.value ?? "") : ""}
+                          onValueChange={(v) =>
+                            field.onChange(v === "__clear__" ? "" : v)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="— Choisir des conditions —" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__clear__">— Aucune —</SelectItem>
+                            {conditionsPaiementOptions.map((c) => (
+                              <SelectItem key={c} value={c}>{c}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      <Input
+                        placeholder="Ou saisir librement…"
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value)}
+                      />
+                    </div>
+                  );
+                }}
+              />
+              {conditionsPaiementOptions.length === 0 && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Configurez les modes dans Paramètres pour les retrouver dans la liste.
+                  Configurez les conditions dans Paramètres pour les retrouver ici.
                 </p>
               )}
             </div>

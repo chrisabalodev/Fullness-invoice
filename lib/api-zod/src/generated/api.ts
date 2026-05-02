@@ -26,6 +26,9 @@ export const GetCompanyResponse = zod.object({
   rccm: zod.string(),
   bankAccounts: zod.string().describe("Comptes bancaires (texte libre)"),
   modesReglement: zod.string().describe("Modes de règlement (un par ligne)"),
+  conditionsPaiement: zod
+    .string()
+    .describe("Conditions de paiement prédéfinies (une par ligne)"),
   comptoirName: zod.string(),
   comptoirCity: zod.string(),
   comptoirPhone: zod.string(),
@@ -45,6 +48,7 @@ export const UpdateCompanyBody = zod.object({
   rccm: zod.string(),
   bankAccounts: zod.string(),
   modesReglement: zod.string(),
+  conditionsPaiement: zod.string(),
   comptoirName: zod.string(),
   comptoirCity: zod.string(),
   comptoirPhone: zod.string(),
@@ -62,6 +66,9 @@ export const UpdateCompanyResponse = zod.object({
   rccm: zod.string(),
   bankAccounts: zod.string().describe("Comptes bancaires (texte libre)"),
   modesReglement: zod.string().describe("Modes de règlement (un par ligne)"),
+  conditionsPaiement: zod
+    .string()
+    .describe("Conditions de paiement prédéfinies (une par ligne)"),
   comptoirName: zod.string(),
   comptoirCity: zod.string(),
   comptoirPhone: zod.string(),
@@ -277,6 +284,7 @@ export const CreateDocumentBody = zod.object({
   reference: zod.string().nullish(),
   notes: zod.string().nullish(),
   modeReglement: zod.string().nullish(),
+  conditionsPaiement: zod.string().nullish(),
   applyTva: zod.boolean(),
   tvaPourMemoire: zod.boolean().optional(),
   status: zod.enum(["brouillon", "valide", "livre", "paye", "annule"]),
@@ -329,6 +337,7 @@ export const GetDocumentResponse = zod.object({
   reference: zod.string().nullish(),
   notes: zod.string().nullish(),
   modeReglement: zod.string().nullish(),
+  conditionsPaiement: zod.string().nullish(),
   lines: zod.array(
     zod.object({
       id: zod.number(),
@@ -388,6 +397,7 @@ export const UpdateDocumentBody = zod.object({
   reference: zod.string().nullish(),
   notes: zod.string().nullish(),
   modeReglement: zod.string().nullish(),
+  conditionsPaiement: zod.string().nullish(),
   applyTva: zod.boolean(),
   tvaPourMemoire: zod.boolean().optional(),
   status: zod.enum(["brouillon", "valide", "livre", "paye", "annule"]),
@@ -436,6 +446,7 @@ export const UpdateDocumentResponse = zod.object({
   reference: zod.string().nullish(),
   notes: zod.string().nullish(),
   modeReglement: zod.string().nullish(),
+  conditionsPaiement: zod.string().nullish(),
   lines: zod.array(
     zod.object({
       id: zod.number(),
@@ -521,6 +532,7 @@ export const UpdateDocumentStatusResponse = zod.object({
   reference: zod.string().nullish(),
   notes: zod.string().nullish(),
   modeReglement: zod.string().nullish(),
+  conditionsPaiement: zod.string().nullish(),
   lines: zod.array(
     zod.object({
       id: zod.number(),

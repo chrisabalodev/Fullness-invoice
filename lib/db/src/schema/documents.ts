@@ -25,6 +25,7 @@ export const documentsTable = pgTable("documents", {
   reference: text("reference"),
   notes: text("notes"),
   modeReglement: text("mode_reglement"),
+  conditionsPaiement: text("conditions_paiement"),
   totalHt: doublePrecision("total_ht").notNull().default(0),
   totalRemise: doublePrecision("total_remise").notNull().default(0),
   totalTva: doublePrecision("total_tva").notNull().default(0),

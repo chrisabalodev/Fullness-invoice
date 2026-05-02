@@ -338,6 +338,7 @@ export default function DocumentDetailPage({ id }: { id: number }) {
               <DataRow label="Vendeur" value={doc.vendeur || "—"} />
               <DataRow label="Référence" value={doc.reference || "—"} />
               <DataRow label="Mode de règlement" value={doc.modeReglement || "—"} />
+              <DataRow label="Conditions de paiement" value={doc.conditionsPaiement || "—"} />
               {doc.notes && (
                 <div>
                   <Label>Notes</Label>

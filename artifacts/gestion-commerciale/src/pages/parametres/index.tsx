@@ -23,6 +23,7 @@ interface CompanyFormValues {
   rccm: string;
   bankAccounts: string;
   modesReglement: string;
+  conditionsPaiement: string;
   comptoirName: string;
   comptoirCity: string;
   comptoirPhone: string;
@@ -117,6 +118,29 @@ export default function ParametresPage() {
                 className="font-mono text-sm"
                 placeholder={"Espèces\nChèque\nVirement bancaire\nMobile money\nCarte bancaire"}
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Ces modes apparaissent dans la liste déroulante sur les documents et les règlements.
+              </p>
+            </div>
+            <div className="col-span-2">
+              <Label htmlFor="conditionsPaiement">Conditions de paiement (une par ligne)</Label>
+              <Textarea
+                id="conditionsPaiement"
+                rows={6}
+                {...register("conditionsPaiement")}
+                className="font-mono text-sm"
+                placeholder={
+                  "Paiement comptant à la livraison\n" +
+                  "20% à la commande, solde à la réception\n" +
+                  "30% à la commande, 70% à la livraison\n" +
+                  "Paiement fin de mois\n" +
+                  "Paiement 30 jours fin de mois\n" +
+                  "Paiement 30 jours fin de mois le 10"
+                }
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Ces modèles de conditions apparaissent en liste déroulante sur les documents et le PDF imprimé.
+              </p>
             </div>
           </CardContent>
         </Card>

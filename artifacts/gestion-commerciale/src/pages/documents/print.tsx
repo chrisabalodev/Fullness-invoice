@@ -186,8 +186,13 @@ export default function DocumentPrintPage({ id }: { id: number }) {
               <div className="meta-line">
                 {doc.vendeur && <span>Vendeur : {doc.vendeur}</span>}
                 {doc.reference && <span>REF : {doc.reference}</span>}
-                {doc.modeReglement && <span>Mode : {doc.modeReglement}</span>}
+                {doc.modeReglement && <span>Mode de règlement : {doc.modeReglement}</span>}
               </div>
+              {doc.conditionsPaiement && (
+                <div className="conditions-line">
+                  Conditions de paiement : {doc.conditionsPaiement}
+                </div>
+              )}
               {showReglements && (
                 <div className="reglements-box">
                   <div className="reglements-title">RÈGLEMENTS REÇUS</div>
@@ -414,6 +419,15 @@ const PRINT_CSS = `
   }
   .num { font-family: 'Courier New', monospace; tabular-nums: true; }
   .memo-mention { padding: 4px 10px; font-size: 8pt; font-style: italic; color: #444; border-top: 1px solid #999; }
+
+  .conditions-line {
+    margin-top: 6px;
+    font-size: 8.5pt;
+    font-style: italic;
+    color: #222;
+    border-top: 1px dashed #999;
+    padding-top: 4px;
+  }
 
   .reglements-box { margin-top: 8px; border: 1px solid #000; }
   .reglements-title {

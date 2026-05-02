@@ -41,6 +41,8 @@ export interface Company {
   bankAccounts: string;
   /** Modes de règlement (un par ligne) */
   modesReglement: string;
+  /** Conditions de paiement prédéfinies (une par ligne) */
+  conditionsPaiement: string;
   comptoirName: string;
   comptoirCity: string;
   comptoirPhone: string;
@@ -57,6 +59,7 @@ export interface UpdateCompanyBody {
   rccm: string;
   bankAccounts: string;
   modesReglement: string;
+  conditionsPaiement: string;
   comptoirName: string;
   comptoirCity: string;
   comptoirPhone: string;
@@ -159,6 +162,7 @@ export interface Document {
   reference?: string | null;
   notes?: string | null;
   modeReglement?: string | null;
+  conditionsPaiement?: string | null;
   lines: DocumentLine[];
   reglements: Reglement[];
   totalHt: number;
@@ -196,6 +200,7 @@ export interface CreateDocumentBody {
   reference?: string | null;
   notes?: string | null;
   modeReglement?: string | null;
+  conditionsPaiement?: string | null;
   applyTva: boolean;
   tvaPourMemoire?: boolean;
   status: DocumentStatus;
