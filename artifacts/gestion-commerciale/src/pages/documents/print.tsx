@@ -226,7 +226,7 @@ export default function DocumentPrintPage({ id }: { id: number }) {
               <div className="totals-row">
                 <span>Total HT (F CFA)</span>
                 <span className="num">{formatMoneyDecimal(doc.totalHt)}</span>
-              </div>
+              </div> 
               <div className="totals-row">
                 <span>Total Remise (F CFA)</span>
                 <span className="num">{formatMoneyDecimal(doc.totalRemise)}</span>
