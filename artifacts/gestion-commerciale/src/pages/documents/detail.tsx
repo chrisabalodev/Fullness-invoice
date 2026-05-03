@@ -209,9 +209,21 @@ export default function DocumentDetailPage({ id }: { id: number }) {
                 <Repeat className="w-4 h-4 mr-2" /> Bon de livraison
               </Button>
             )}
-            <Button onClick={() => window.open(printUrl, "_blank")}>
-              <Printer className="w-4 h-4 mr-2" /> Imprimer / PDF
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button>
+                  <Printer className="w-4 h-4 mr-2" /> Imprimer / PDF
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => window.open(printUrl, "_blank")}>
+                  Imprimer ORIGINAL
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.open(`${printUrl}?duplicata`, "_blank")}>
+                  Imprimer DUPLICATA
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               variant="outline"
               size="icon"

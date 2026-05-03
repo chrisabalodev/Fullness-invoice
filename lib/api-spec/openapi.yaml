@@ -786,6 +786,10 @@ components:
         conditionsPaiement:
           type: string
           nullable: true
+        footerNotes:
+          type: string
+          nullable: true
+          description: Notes de bas de page imprimées sur le document
         lines:
           type: array
           items:
@@ -885,6 +889,9 @@ components:
           type: string
           nullable: true
         conditionsPaiement:
+          type: string
+          nullable: true
+        footerNotes:
           type: string
           nullable: true
         applyTva:
