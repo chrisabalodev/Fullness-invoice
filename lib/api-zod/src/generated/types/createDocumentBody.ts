@@ -19,6 +19,7 @@ export interface CreateDocumentBody {
   notes?: string | null;
   modeReglement?: string | null;
   conditionsPaiement?: string | null;
+  footerNotes?: string | null;
   applyTva: boolean;
   tvaPourMemoire?: boolean;
   status: DocumentStatus;

@@ -33,6 +33,8 @@ export const DocumentStatus = {
 export interface Company {
   id: number;
   name: string;
+  /** Description / activité de l'entreprise */
+  description: string;
   address: string;
   phone: string;
   fiscalNumber: string;
@@ -49,10 +51,13 @@ export interface Company {
   tvaRate: number;
   currency: string;
   legalFooter: string;
+  /** Signature ajoutée aux messages email et WhatsApp */
+  emailSignature: string;
 }
 
 export interface UpdateCompanyBody {
   name: string;
+  description: string;
   address: string;
   phone: string;
   fiscalNumber: string;
@@ -66,6 +71,7 @@ export interface UpdateCompanyBody {
   tvaRate: number;
   currency: string;
   legalFooter: string;
+  emailSignature: string;
 }
 
 export interface Client {
@@ -163,6 +169,8 @@ export interface Document {
   notes?: string | null;
   modeReglement?: string | null;
   conditionsPaiement?: string | null;
+  /** Notes de bas de page imprimées sur le document */
+  footerNotes?: string | null;
   lines: DocumentLine[];
   reglements: Reglement[];
   totalHt: number;
@@ -201,6 +209,7 @@ export interface CreateDocumentBody {
   notes?: string | null;
   modeReglement?: string | null;
   conditionsPaiement?: string | null;
+  footerNotes?: string | null;
   applyTva: boolean;
   tvaPourMemoire?: boolean;
   status: DocumentStatus;

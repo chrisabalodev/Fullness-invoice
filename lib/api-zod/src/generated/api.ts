@@ -20,6 +20,7 @@ export const HealthCheckResponse = zod.object({
 export const GetCompanyResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
+  description: zod.string().describe("Description \/ activité de l'entreprise"),
   address: zod.string(),
   phone: zod.string(),
   fiscalNumber: zod.string(),
@@ -35,6 +36,9 @@ export const GetCompanyResponse = zod.object({
   tvaRate: zod.number(),
   currency: zod.string(),
   legalFooter: zod.string(),
+  emailSignature: zod
+    .string()
+    .describe("Signature ajoutée aux messages email et WhatsApp"),
 });
 
 /**
@@ -42,6 +46,7 @@ export const GetCompanyResponse = zod.object({
  */
 export const UpdateCompanyBody = zod.object({
   name: zod.string(),
+  description: zod.string(),
   address: zod.string(),
   phone: zod.string(),
   fiscalNumber: zod.string(),
@@ -55,11 +60,13 @@ export const UpdateCompanyBody = zod.object({
   tvaRate: zod.number(),
   currency: zod.string(),
   legalFooter: zod.string(),
+  emailSignature: zod.string(),
 });
 
 export const UpdateCompanyResponse = zod.object({
   id: zod.number(),
   name: zod.string(),
+  description: zod.string().describe("Description \/ activité de l'entreprise"),
   address: zod.string(),
   phone: zod.string(),
   fiscalNumber: zod.string(),
@@ -75,6 +82,9 @@ export const UpdateCompanyResponse = zod.object({
   tvaRate: zod.number(),
   currency: zod.string(),
   legalFooter: zod.string(),
+  emailSignature: zod
+    .string()
+    .describe("Signature ajoutée aux messages email et WhatsApp"),
 });
 
 /**
@@ -285,6 +295,7 @@ export const CreateDocumentBody = zod.object({
   notes: zod.string().nullish(),
   modeReglement: zod.string().nullish(),
   conditionsPaiement: zod.string().nullish(),
+  footerNotes: zod.string().nullish(),
   applyTva: zod.boolean(),
   tvaPourMemoire: zod.boolean().optional(),
   status: zod.enum(["brouillon", "valide", "livre", "paye", "annule"]),
@@ -338,6 +349,10 @@ export const GetDocumentResponse = zod.object({
   notes: zod.string().nullish(),
   modeReglement: zod.string().nullish(),
   conditionsPaiement: zod.string().nullish(),
+  footerNotes: zod
+    .string()
+    .nullish()
+    .describe("Notes de bas de page imprimées sur le document"),
   lines: zod.array(
     zod.object({
       id: zod.number(),
@@ -398,6 +413,7 @@ export const UpdateDocumentBody = zod.object({
   notes: zod.string().nullish(),
   modeReglement: zod.string().nullish(),
   conditionsPaiement: zod.string().nullish(),
+  footerNotes: zod.string().nullish(),
   applyTva: zod.boolean(),
   tvaPourMemoire: zod.boolean().optional(),
   status: zod.enum(["brouillon", "valide", "livre", "paye", "annule"]),
@@ -447,6 +463,10 @@ export const UpdateDocumentResponse = zod.object({
   notes: zod.string().nullish(),
   modeReglement: zod.string().nullish(),
   conditionsPaiement: zod.string().nullish(),
+  footerNotes: zod
+    .string()
+    .nullish()
+    .describe("Notes de bas de page imprimées sur le document"),
   lines: zod.array(
     zod.object({
       id: zod.number(),
@@ -533,6 +553,10 @@ export const UpdateDocumentStatusResponse = zod.object({
   notes: zod.string().nullish(),
   modeReglement: zod.string().nullish(),
   conditionsPaiement: zod.string().nullish(),
+  footerNotes: zod
+    .string()
+    .nullish()
+    .describe("Notes de bas de page imprimées sur le document"),
   lines: zod.array(
     zod.object({
       id: zod.number(),

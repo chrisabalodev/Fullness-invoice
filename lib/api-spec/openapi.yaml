@@ -512,6 +512,9 @@ components:
           type: integer
         name:
           type: string
+        description:
+          type: string
+          description: Description / activité de l'entreprise
         address:
           type: string
         phone:
@@ -542,13 +545,18 @@ components:
           type: string
         legalFooter:
           type: string
+        emailSignature:
+          type: string
+          description: Signature ajoutée aux messages email et WhatsApp
       required:
-        [id, name, address, phone, fiscalNumber, rccm, bankAccounts, modesReglement, conditionsPaiement, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter]
+        [id, name, description, address, phone, fiscalNumber, rccm, bankAccounts, modesReglement, conditionsPaiement, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter, emailSignature]
 
     UpdateCompanyBody:
       type: object
       properties:
         name:
+          type: string
+        description:
           type: string
         address:
           type: string
@@ -577,8 +585,10 @@ components:
           type: string
         legalFooter:
           type: string
+        emailSignature:
+          type: string
       required:
-        [name, address, phone, fiscalNumber, rccm, bankAccounts, modesReglement, conditionsPaiement, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter]
+        [name, description, address, phone, fiscalNumber, rccm, bankAccounts, modesReglement, conditionsPaiement, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter, emailSignature]
 
     Client:
       type: object

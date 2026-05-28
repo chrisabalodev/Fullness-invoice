@@ -8,6 +8,7 @@
 
 export interface UpdateCompanyBody {
   name: string;
+  description: string;
   address: string;
   phone: string;
   fiscalNumber: string;
@@ -21,4 +22,5 @@ export interface UpdateCompanyBody {
   tvaRate: number;
   currency: string;
   legalFooter: string;
+  emailSignature: string;
 }

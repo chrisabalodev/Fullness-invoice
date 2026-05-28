@@ -12,6 +12,7 @@ async function getOrCreateCompany() {
     .insert(companyTable)
     .values({
       name: "MA SOCIETE",
+      description: "",
       address: "",
       phone: "",
       fiscalNumber: "",
@@ -23,6 +24,7 @@ async function getOrCreateCompany() {
       tvaRate: 18,
       currency: "F CFA",
       legalFooter: "",
+      emailSignature: "",
     })
     .returning();
   return created!;
@@ -32,6 +34,7 @@ function serialize(row: NonNullable<Awaited<ReturnType<typeof getOrCreateCompany
   return {
     id: row.id,
     name: row.name,
+    description: row.description ?? "",
     address: row.address,
     phone: row.phone,
     fiscalNumber: row.fiscalNumber,
@@ -45,6 +48,7 @@ function serialize(row: NonNullable<Awaited<ReturnType<typeof getOrCreateCompany
     tvaRate: row.tvaRate,
     currency: row.currency,
     legalFooter: row.legalFooter,
+    emailSignature: row.emailSignature ?? "",
   };
 }
 

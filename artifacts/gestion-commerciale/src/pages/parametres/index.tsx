@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 
 interface CompanyFormValues {
   name: string;
+  description: string;
   address: string;
   phone: string;
   fiscalNumber: string;
@@ -30,6 +31,7 @@ interface CompanyFormValues {
   tvaRate: number;
   currency: string;
   legalFooter: string;
+  emailSignature: string;
 }
 
 export default function ParametresPage() {
@@ -80,6 +82,10 @@ export default function ParametresPage() {
             <div className="col-span-2">
               <Label htmlFor="name">Raison sociale</Label>
               <Input id="name" {...register("name", { required: true })} />
+            </div>
+            <div className="col-span-2">
+              <Label htmlFor="description">Description / Activité</Label>
+              <Input id="description" {...register("description")} placeholder="Ex : Grossiste en matériel électrique, quincaillerie…" />
             </div>
             <div className="col-span-2">
               <Label htmlFor="address">Adresse complète</Label>
@@ -169,10 +175,24 @@ export default function ParametresPage() {
         <Card>
           <CardHeader>
             <CardTitle>Mentions légales</CardTitle>
-            <CardDescription>Affiché en bas des documents.</CardDescription>
+            <CardDescription>Affiché en bas des documents imprimés.</CardDescription>
           </CardHeader>
           <CardContent>
             <Textarea rows={3} {...register("legalFooter")} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Signature email / WhatsApp</CardTitle>
+            <CardDescription>Ajoutée automatiquement au bas des messages de partage de documents.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Textarea
+              rows={4}
+              {...register("emailSignature")}
+              placeholder={"Cordialement,\nSTE LE WATT\nTél : +228 22 22 27 74\nwww.exemple.com"}
+            />
           </CardContent>
         </Card>
 

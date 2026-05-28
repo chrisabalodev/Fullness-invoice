@@ -9,6 +9,8 @@
 export interface Company {
   id: number;
   name: string;
+  /** Description / activité de l'entreprise */
+  description: string;
   address: string;
   phone: string;
   fiscalNumber: string;
@@ -25,4 +27,6 @@ export interface Company {
   tvaRate: number;
   currency: string;
   legalFooter: string;
+  /** Signature ajoutée aux messages email et WhatsApp */
+  emailSignature: string;
 }

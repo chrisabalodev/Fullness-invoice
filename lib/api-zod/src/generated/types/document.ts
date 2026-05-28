@@ -25,6 +25,8 @@ export interface Document {
   notes?: string | null;
   modeReglement?: string | null;
   conditionsPaiement?: string | null;
+  /** Notes de bas de page imprimées sur le document */
+  footerNotes?: string | null;
   lines: DocumentLine[];
   reglements: Reglement[];
   totalHt: number;
