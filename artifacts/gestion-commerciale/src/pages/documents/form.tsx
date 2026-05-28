@@ -556,7 +556,7 @@ export default function DocumentFormPage({ id }: { id?: number }) {
               <TableRow>
                 <TableHead className="w-[180px]">Article</TableHead>
                 <TableHead className="w-[130px]">Référence</TableHead>
-                <TableHead>Désignation</TableHead>
+                <TableHead className="w-[160px]">Désignation</TableHead>
                 <TableHead className="w-[70px]">Qté</TableHead>
                 <TableHead className="w-[80px]">Unité</TableHead>
                 <TableHead className="w-[110px]">Prix HT</TableHead>
