@@ -23,4 +23,11 @@ export interface UpdateCompanyBody {
   currency: string;
   legalFooter: string;
   emailSignature: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUser: string;
+  smtpPassword: string;
+  smtpFromName: string;
+  smtpFromEmail: string;
+  smtpSecure: boolean;
 }

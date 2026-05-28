@@ -548,8 +548,22 @@ components:
         emailSignature:
           type: string
           description: Signature ajoutée aux messages email et WhatsApp
+        smtpHost:
+          type: string
+        smtpPort:
+          type: integer
+        smtpUser:
+          type: string
+        smtpPassword:
+          type: string
+        smtpFromName:
+          type: string
+        smtpFromEmail:
+          type: string
+        smtpSecure:
+          type: boolean
       required:
-        [id, name, description, address, phone, fiscalNumber, rccm, bankAccounts, modesReglement, conditionsPaiement, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter, emailSignature]
+        [id, name, description, address, phone, fiscalNumber, rccm, bankAccounts, modesReglement, conditionsPaiement, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter, emailSignature, smtpHost, smtpPort, smtpUser, smtpPassword, smtpFromName, smtpFromEmail, smtpSecure]
 
     UpdateCompanyBody:
       type: object
@@ -587,8 +601,22 @@ components:
           type: string
         emailSignature:
           type: string
+        smtpHost:
+          type: string
+        smtpPort:
+          type: integer
+        smtpUser:
+          type: string
+        smtpPassword:
+          type: string
+        smtpFromName:
+          type: string
+        smtpFromEmail:
+          type: string
+        smtpSecure:
+          type: boolean
       required:
-        [name, description, address, phone, fiscalNumber, rccm, bankAccounts, modesReglement, conditionsPaiement, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter, emailSignature]
+        [name, description, address, phone, fiscalNumber, rccm, bankAccounts, modesReglement, conditionsPaiement, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter, emailSignature, smtpHost, smtpPort, smtpUser, smtpPassword, smtpFromName, smtpFromEmail, smtpSecure]
 
     Client:
       type: object

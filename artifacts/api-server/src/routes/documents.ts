@@ -22,6 +22,8 @@ import {
 } from "@workspace/api-zod";
 import { generateNumero } from "../lib/numero";
 import { computeTotals, computeLineMontantHt } from "../lib/totals";
+import { generateDocumentPdf } from "../lib/pdf";
+import { sendEmail } from "../lib/email";
 
 const router: IRouter = Router();
 
@@ -412,6 +414,65 @@ router.post("/documents/:id/convert", async (req, res): Promise<void> => {
 
   const result = await loadDocument(doc.id);
   res.status(201).json(result);
+});
+
+// GET /documents/:id/pdf — Téléchargement du PDF
+router.get("/documents/:id/pdf", async (req, res): Promise<void> => {
+  const id = Number(req.params.id);
+  if (isNaN(id)) { res.status(400).json({ error: "ID invalide" }); return; }
+  const doc = await loadDocument(id);
+  if (!doc) { res.status(404).json({ error: "Document introuvable" }); return; }
+  const [companyRow] = await db.select().from(companyTable).limit(1);
+  const pdfBuffer = await generateDocumentPdf(doc, companyRow ?? {});
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename="${doc.numero}.pdf"`);
+  res.send(pdfBuffer);
+});
+
+// POST /documents/:id/send-email — Envoi par email
+router.post("/documents/:id/send-email", async (req, res): Promise<void> => {
+  const id = Number(req.params.id);
+  if (isNaN(id)) { res.status(400).json({ error: "ID invalide" }); return; }
+  const { to, subject, body } = req.body as { to: string; subject: string; body: string };
+  if (!to || !subject) { res.status(400).json({ error: "Destinataire et sujet requis" }); return; }
+  const doc = await loadDocument(id);
+  if (!doc) { res.status(404).json({ error: "Document introuvable" }); return; }
+  const [companyRow] = await db.select().from(companyTable).limit(1);
+  if (!companyRow?.smtpHost) {
+    res.status(400).json({ error: "Configuration SMTP manquante — veuillez renseigner les paramètres SMTP" });
+    return;
+  }
+  const pdfBuffer = await generateDocumentPdf(doc, companyRow ?? {});
+  await sendEmail({
+    smtp: {
+      host: companyRow.smtpHost,
+      port: companyRow.smtpPort ?? 587,
+      user: companyRow.smtpUser ?? "",
+      password: companyRow.smtpPassword ?? "",
+      fromName: companyRow.smtpFromName ?? "",
+      fromEmail: companyRow.smtpFromEmail ?? "",
+      secure: companyRow.smtpSecure ?? false,
+    },
+    to,
+    subject,
+    body,
+    attachments: [{ filename: `${doc.numero}.pdf`, content: pdfBuffer, contentType: "application/pdf" }],
+  });
+  res.json({ success: true });
+});
+
+// POST /company/test-smtp — Test de connexion SMTP
+router.post("/company/test-smtp", async (req, res): Promise<void> => {
+  const { host, port, user, password, fromName, fromEmail, secure } = req.body as {
+    host: string; port: number; user: string; password: string; fromName: string; fromEmail: string; secure: boolean;
+  };
+  const { testSmtpConnection } = await import("../lib/email.js");
+  try {
+    await testSmtpConnection({ host, port: port ?? 587, user, password, fromName, fromEmail, secure: secure ?? false });
+    res.json({ success: true, message: "Connexion SMTP réussie" });
+  } catch (e: any) {
+    res.status(400).json({ success: false, error: e.message ?? "Échec de la connexion SMTP" });
+  }
 });
 
 export default router;

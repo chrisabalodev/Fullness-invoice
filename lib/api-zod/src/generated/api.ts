@@ -39,6 +39,13 @@ export const GetCompanyResponse = zod.object({
   emailSignature: zod
     .string()
     .describe("Signature ajoutée aux messages email et WhatsApp"),
+  smtpHost: zod.string(),
+  smtpPort: zod.number(),
+  smtpUser: zod.string(),
+  smtpPassword: zod.string(),
+  smtpFromName: zod.string(),
+  smtpFromEmail: zod.string(),
+  smtpSecure: zod.boolean(),
 });
 
 /**
@@ -61,6 +68,13 @@ export const UpdateCompanyBody = zod.object({
   currency: zod.string(),
   legalFooter: zod.string(),
   emailSignature: zod.string(),
+  smtpHost: zod.string(),
+  smtpPort: zod.number(),
+  smtpUser: zod.string(),
+  smtpPassword: zod.string(),
+  smtpFromName: zod.string(),
+  smtpFromEmail: zod.string(),
+  smtpSecure: zod.boolean(),
 });
 
 export const UpdateCompanyResponse = zod.object({
@@ -85,6 +99,13 @@ export const UpdateCompanyResponse = zod.object({
   emailSignature: zod
     .string()
     .describe("Signature ajoutée aux messages email et WhatsApp"),
+  smtpHost: zod.string(),
+  smtpPort: zod.number(),
+  smtpUser: zod.string(),
+  smtpPassword: zod.string(),
+  smtpFromName: zod.string(),
+  smtpFromEmail: zod.string(),
+  smtpSecure: zod.boolean(),
 });
 
 /**

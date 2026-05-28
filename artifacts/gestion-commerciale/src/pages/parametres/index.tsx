@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -7,7 +7,7 @@ import {
   getGetCompanyQueryKey,
 } from "@workspace/api-client-react";
 import { toast } from "sonner";
-import { Building2, Save } from "lucide-react";
+import { Building2, Save, Wifi, WifiOff } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,11 +32,19 @@ interface CompanyFormValues {
   currency: string;
   legalFooter: string;
   emailSignature: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUser: string;
+  smtpPassword: string;
+  smtpFromName: string;
+  smtpFromEmail: string;
+  smtpSecure: boolean;
 }
 
 export default function ParametresPage() {
   const qc = useQueryClient();
   const { data: company } = useGetCompany();
+  const [smtpTesting, setSmtpTesting] = useState(false);
   const update = useUpdateCompany({
     mutation: {
       onSuccess: () => {
@@ -47,7 +55,30 @@ export default function ParametresPage() {
     },
   });
 
-  const { register, handleSubmit, reset } = useForm<CompanyFormValues>();
+  const { register, handleSubmit, reset, getValues } = useForm<CompanyFormValues>();
+
+  async function testSmtp() {
+    const v = getValues();
+    setSmtpTesting(true);
+    try {
+      const r = await fetch("/api/company/test-smtp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          host: v.smtpHost, port: Number(v.smtpPort), user: v.smtpUser,
+          password: v.smtpPassword, fromName: v.smtpFromName,
+          fromEmail: v.smtpFromEmail, secure: v.smtpSecure,
+        }),
+      });
+      const data = await r.json();
+      if (data.success) toast.success("Connexion SMTP réussie");
+      else toast.error(data.error ?? "Échec de la connexion SMTP");
+    } catch {
+      toast.error("Erreur réseau lors du test SMTP");
+    } finally {
+      setSmtpTesting(false);
+    }
+  }
 
   useEffect(() => {
     if (company) reset(company as CompanyFormValues);
@@ -193,6 +224,60 @@ export default function ParametresPage() {
               {...register("emailSignature")}
               placeholder={"Cordialement,\nSTE LE WATT\nTél : +228 22 22 27 74\nwww.exemple.com"}
             />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Configuration SMTP (envoi d'emails)</CardTitle>
+            <CardDescription>
+              Paramètres du serveur mail sortant. Utilisé pour envoyer les documents PDF en pièce jointe.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <Label htmlFor="smtpHost">Hôte SMTP</Label>
+              <Input id="smtpHost" {...register("smtpHost")} placeholder="smtp.gmail.com" />
+            </div>
+            <div>
+              <Label htmlFor="smtpPort">Port</Label>
+              <Input id="smtpPort" type="number" {...register("smtpPort", { valueAsNumber: true })} placeholder="587" />
+            </div>
+            <div className="flex items-center gap-3 pt-6">
+              <input
+                id="smtpSecure"
+                type="checkbox"
+                className="w-4 h-4"
+                {...register("smtpSecure")}
+              />
+              <Label htmlFor="smtpSecure" className="cursor-pointer">SSL/TLS (port 465)</Label>
+            </div>
+            <div>
+              <Label htmlFor="smtpFromName">Nom de l'expéditeur</Label>
+              <Input id="smtpFromName" {...register("smtpFromName")} placeholder="STE LE WATT" />
+            </div>
+            <div>
+              <Label htmlFor="smtpFromEmail">Email expéditeur</Label>
+              <Input id="smtpFromEmail" type="email" {...register("smtpFromEmail")} placeholder="contact@lewatt.tg" />
+            </div>
+            <div>
+              <Label htmlFor="smtpUser">Utilisateur SMTP</Label>
+              <Input id="smtpUser" {...register("smtpUser")} placeholder="contact@lewatt.tg" />
+            </div>
+            <div>
+              <Label htmlFor="smtpPassword">Mot de passe SMTP</Label>
+              <Input id="smtpPassword" type="password" {...register("smtpPassword")} />
+            </div>
+            <div className="col-span-2 flex justify-end">
+              <Button type="button" variant="outline" onClick={testSmtp} disabled={smtpTesting}>
+                {smtpTesting ? (
+                  <WifiOff className="w-4 h-4 mr-2" />
+                ) : (
+                  <Wifi className="w-4 h-4 mr-2" />
+                )}
+                {smtpTesting ? "Test en cours…" : "Tester la connexion SMTP"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 

@@ -25,6 +25,13 @@ async function getOrCreateCompany() {
       currency: "F CFA",
       legalFooter: "",
       emailSignature: "",
+      smtpHost: "",
+      smtpPort: 587,
+      smtpUser: "",
+      smtpPassword: "",
+      smtpFromName: "",
+      smtpFromEmail: "",
+      smtpSecure: false,
     })
     .returning();
   return created!;
@@ -49,6 +56,13 @@ function serialize(row: NonNullable<Awaited<ReturnType<typeof getOrCreateCompany
     currency: row.currency,
     legalFooter: row.legalFooter,
     emailSignature: row.emailSignature ?? "",
+    smtpHost: row.smtpHost ?? "",
+    smtpPort: row.smtpPort ?? 587,
+    smtpUser: row.smtpUser ?? "",
+    smtpPassword: row.smtpPassword ?? "",
+    smtpFromName: row.smtpFromName ?? "",
+    smtpFromEmail: row.smtpFromEmail ?? "",
+    smtpSecure: row.smtpSecure ?? false,
   };
 }
 

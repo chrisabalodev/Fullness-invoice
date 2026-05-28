@@ -4,6 +4,8 @@ import {
   text,
   doublePrecision,
   timestamp,
+  integer,
+  boolean,
 } from "drizzle-orm/pg-core";
 
 export const companyTable = pgTable("company", {
@@ -24,6 +26,13 @@ export const companyTable = pgTable("company", {
   currency: text("currency").notNull().default("F CFA"),
   legalFooter: text("legal_footer").notNull().default(""),
   emailSignature: text("email_signature").notNull().default(""),
+  smtpHost: text("smtp_host").notNull().default(""),
+  smtpPort: integer("smtp_port").notNull().default(587),
+  smtpUser: text("smtp_user").notNull().default(""),
+  smtpPassword: text("smtp_password").notNull().default(""),
+  smtpFromName: text("smtp_from_name").notNull().default(""),
+  smtpFromEmail: text("smtp_from_email").notNull().default(""),
+  smtpSecure: boolean("smtp_secure").notNull().default(false),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow()

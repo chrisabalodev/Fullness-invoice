@@ -53,6 +53,13 @@ export interface Company {
   legalFooter: string;
   /** Signature ajoutée aux messages email et WhatsApp */
   emailSignature: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUser: string;
+  smtpPassword: string;
+  smtpFromName: string;
+  smtpFromEmail: string;
+  smtpSecure: boolean;
 }
 
 export interface UpdateCompanyBody {
@@ -72,6 +79,13 @@ export interface UpdateCompanyBody {
   currency: string;
   legalFooter: string;
   emailSignature: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUser: string;
+  smtpPassword: string;
+  smtpFromName: string;
+  smtpFromEmail: string;
+  smtpSecure: boolean;
 }
 
 export interface Client {

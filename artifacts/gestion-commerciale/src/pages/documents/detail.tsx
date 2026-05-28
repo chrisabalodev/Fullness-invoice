@@ -29,6 +29,7 @@ import {
   Mail,
   MessageCircle,
 } from "lucide-react";
+import { EmailComposeDialog, WhatsAppComposeDialog } from "./compose-dialogs";
 import { PageHeader } from "@/components/page-header";
 import { TypeBadge, StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
@@ -142,6 +143,10 @@ export default function DocumentDetailPage({ id }: { id: number }) {
     },
   });
 
+  // --- Dialogues de partage ---
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [whatsAppDialogOpen, setWhatsAppDialogOpen] = useState(false);
+
   if (isLoading) {
     return <p className="text-muted-foreground">Chargement…</p>;
   }
@@ -157,77 +162,6 @@ export default function DocumentDetailPage({ id }: { id: number }) {
   const printUrl = `${import.meta.env.BASE_URL}documents/${doc.id}/print`;
   const showReglements = doc.type === "facture" || doc.type === "facture_proforma";
 
-  // --- Partage Email / WhatsApp ---
-  const fullPrintUrl = `${window.location.origin}${printUrl}`;
-  const clientName = doc.clientName ?? "Client";
-  const montant = formatMoney(doc.totalTtc ?? 0);
-  const typeLabels: Record<string, string> = {
-    facture: "facture",
-    facture_proforma: "facture proforma",
-    devis: "devis",
-    bon_livraison: "bon de livraison",
-    avoir: "avoir",
-  };
-  const typeLabel = typeLabels[doc.type] ?? doc.type;
-  const companyName = company?.name ?? "";
-  const sig = company?.emailSignature ?? "";
-
-  function buildMessage() {
-    let body = "";
-    if (doc.type === "facture") {
-      body =
-        `Bonjour ${clientName},\n\n` +
-        `Veuillez trouver ci-joint votre facture N° ${doc.numero} ` +
-        `d'un montant de ${montant}.\n\n` +
-        `Nous vous remercions de votre confiance et restons disponibles pour tout renseignement.\n\n` +
-        `Lien pour consulter et imprimer : ${fullPrintUrl}`;
-    } else if (doc.type === "facture_proforma") {
-      body =
-        `Bonjour ${clientName},\n\n` +
-        `Veuillez trouver ci-joint votre facture proforma N° ${doc.numero} ` +
-        `d'un montant de ${montant}.\n\n` +
-        `N'hésitez pas à nous contacter pour confirmer votre commande ou pour toute question.\n\n` +
-        `Lien pour consulter et imprimer : ${fullPrintUrl}`;
-    } else if (doc.type === "devis") {
-      body =
-        `Bonjour ${clientName},\n\n` +
-        `Veuillez trouver ci-joint votre devis N° ${doc.numero} ` +
-        `d'un montant de ${montant}.\n\n` +
-        `Ce devis est valable 30 jours. Nous restons à votre disposition pour tout complément d'information.\n\n` +
-        `Lien pour consulter et imprimer : ${fullPrintUrl}`;
-    } else if (doc.type === "bon_livraison") {
-      body =
-        `Bonjour ${clientName},\n\n` +
-        `Veuillez trouver ci-joint votre bon de livraison N° ${doc.numero}.\n\n` +
-        `Nous vous remercions de bien vouloir signer et nous retourner ce bon après réception de la marchandise.\n\n` +
-        `Lien pour consulter et imprimer : ${fullPrintUrl}`;
-    } else if (doc.type === "avoir") {
-      body =
-        `Bonjour ${clientName},\n\n` +
-        `Veuillez trouver ci-joint votre avoir N° ${doc.numero} ` +
-        `d'un montant de ${montant}.\n\n` +
-        `Cet avoir sera déduit de votre prochaine commande. N'hésitez pas à nous contacter pour plus d'informations.\n\n` +
-        `Lien pour consulter et imprimer : ${fullPrintUrl}`;
-    } else {
-      body =
-        `Bonjour ${clientName},\n\n` +
-        `Veuillez trouver ci-joint votre ${typeLabel} N° ${doc.numero}.\n\n` +
-        `Lien pour consulter et imprimer : ${fullPrintUrl}`;
-    }
-    if (sig) body += `\n\n${sig}`;
-    return body;
-  }
-
-  function shareByEmail() {
-    const subject = encodeURIComponent(`${companyName} — ${typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)} N° ${doc.numero}`);
-    const body = encodeURIComponent(buildMessage());
-    window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
-  }
-
-  function shareByWhatsApp() {
-    const text = encodeURIComponent(buildMessage());
-    window.open(`https://wa.me/?text=${text}`, "_blank");
-  }
   const modesOptions = (company?.modesReglement ?? "")
     .split(/\r?\n/)
     .map((s) => s.trim())
@@ -283,10 +217,10 @@ export default function DocumentDetailPage({ id }: { id: number }) {
                 <Repeat className="w-4 h-4 mr-2" /> Bon de livraison
               </Button>
             )}
-            <Button variant="outline" onClick={shareByEmail} title="Envoyer par email">
+            <Button variant="outline" onClick={() => setEmailDialogOpen(true)} title="Envoyer par email">
               <Mail className="w-4 h-4 mr-2" /> Email
             </Button>
-            <Button variant="outline" onClick={shareByWhatsApp} title="Envoyer par WhatsApp" className="text-green-600 border-green-600 hover:bg-green-50">
+            <Button variant="outline" onClick={() => setWhatsAppDialogOpen(true)} title="Envoyer par WhatsApp" className="text-green-600 border-green-600 hover:bg-green-50">
               <MessageCircle className="w-4 h-4 mr-2" /> WhatsApp
             </Button>
             <Button onClick={() => window.open(printUrl, "_blank")}>
@@ -586,6 +520,19 @@ export default function DocumentDetailPage({ id }: { id: number }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <EmailComposeDialog
+        open={emailDialogOpen}
+        onClose={() => setEmailDialogOpen(false)}
+        doc={doc}
+        company={company}
+      />
+      <WhatsAppComposeDialog
+        open={whatsAppDialogOpen}
+        onClose={() => setWhatsAppDialogOpen(false)}
+        doc={doc}
+        company={company}
+      />
     </div>
   );
 }
