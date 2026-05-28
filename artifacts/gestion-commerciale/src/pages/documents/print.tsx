@@ -7,11 +7,13 @@ import {
 import { formatMoney, formatMoneyDecimal, formatDate, DOCUMENT_TYPE_TITLE_PRINT } from "@/lib/format";
 import { numberToFrenchWords } from "@/lib/number-to-words";
 
+const COPY_LABELS = ["ORIGINAL", "DUPLICATA", "TRIPLICATA", "QUADRUPLICATA"];
+
 export default function DocumentPrintPage({ id }: { id: number }) {
   const { data: doc } = useGetDocument(id);
   const { data: company } = useGetCompany();
   const barcodeRef = useRef<HTMLCanvasElement>(null);
-  const printedRef = useRef(false);
+  const [copyLabel, setCopyLabel] = useState("ORIGINAL");
 
   useLayoutEffect(() => {
     if (doc && barcodeRef.current) {
@@ -31,18 +33,50 @@ export default function DocumentPrintPage({ id }: { id: number }) {
     }
   }, [doc]);
 
-  useEffect(() => {
-    if (doc && company && !printedRef.current) {
-      printedRef.current = true;
-      const t = setTimeout(() => window.print(), 350);
-      return () => clearTimeout(t);
-    }
-    return undefined;
-  }, [doc, company]);
+  useEffect(() => {}, [doc, company]);
 
   if (!doc || !company) {
     return <p style={{ padding: 20 }}>Chargement…</p>;
   }
+
+  const toolbar = (
+    <div className="print-toolbar no-print">
+      <label htmlFor="copy-label-select" style={{ fontWeight: 600, marginRight: 8 }}>
+        Type de copie :
+      </label>
+      <select
+        id="copy-label-select"
+        value={copyLabel}
+        onChange={(e) => setCopyLabel(e.target.value)}
+        style={{
+          padding: "4px 10px",
+          borderRadius: 4,
+          border: "1px solid #ccc",
+          fontSize: 14,
+          marginRight: 16,
+        }}
+      >
+        {COPY_LABELS.map((l) => (
+          <option key={l} value={l}>{l}</option>
+        ))}
+      </select>
+      <button
+        onClick={() => window.print()}
+        style={{
+          padding: "6px 18px",
+          background: "#111",
+          color: "#fff",
+          border: "none",
+          borderRadius: 4,
+          fontWeight: 600,
+          cursor: "pointer",
+          fontSize: 14,
+        }}
+      >
+        Imprimer / PDF
+      </button>
+    </div>
+  );
 
   const title = DOCUMENT_TYPE_TITLE_PRINT[doc.type] ?? doc.type.toUpperCase();
   const isDevis = doc.type === "devis";
@@ -77,6 +111,7 @@ export default function DocumentPrintPage({ id }: { id: number }) {
   return (
     <>
       <style>{PRINT_CSS}</style>
+      {toolbar}
       <div className="print-page">
         <div className="print-top">
           <div className="company-block">
@@ -101,7 +136,7 @@ export default function DocumentPrintPage({ id }: { id: number }) {
             </div>
           </div>
           <div className="original-block">
-            <div className="original-text">ORIGINAL</div>
+            <div className="original-text">{copyLabel}</div>
           </div>
         </div>
 
@@ -293,6 +328,17 @@ const PRINT_CSS = `
   @media print {
     html, body { background: #fff; }
     .print-page { box-shadow: none; margin: 0; width: auto; min-height: auto; padding: 0; }
+    .no-print { display: none !important; }
+  }
+
+  .print-toolbar {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    background: #f5f5f5;
+    border-bottom: 1px solid #ddd;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
   }
 
   .print-top {

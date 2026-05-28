@@ -47,8 +47,7 @@ function EditDocumentRoute() {
 function PrintDocumentRoute() {
   const [, params] = useRoute<{ id: string }>("/documents/:id/print");
   const id = parseInt(params?.id ?? "0", 10);
-  const duplicata = new URLSearchParams(window.location.search).has("duplicata");
-  return <DocumentPrint id={id} duplicata={duplicata} />;
+  return <DocumentPrint id={id} />;
 }
 
 function DetailDocumentRoute() {
