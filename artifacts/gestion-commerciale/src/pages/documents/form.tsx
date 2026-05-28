@@ -592,7 +592,7 @@ export default function DocumentFormPage({ id }: { id?: number }) {
                         placeholder="Réf."
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="max-w-[160px] w-[160px] overflow-hidden">
                       <Controller
                         control={control}
                         name={`lines.${idx}.designation`}
