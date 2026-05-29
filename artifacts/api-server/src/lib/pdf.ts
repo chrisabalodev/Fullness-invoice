@@ -33,6 +33,8 @@ export async function generateDocumentPdf(doc: any, company: any): Promise<Buffe
     const W = pdf.page.width - 80;
     const typeLabel = TYPE_LABELS[doc.type] ?? doc.type.toUpperCase();
     const currency = company.currency ?? "F CFA";
+    const isBL = doc.type === "bon_livraison";
+    const showPrices = !isBL;
 
     // ── HEADER ──────────────────────────────────────────────────────────
     pdf.fontSize(18).font("Helvetica-Bold").text(company.name ?? "", 40, 40);
@@ -65,12 +67,15 @@ export async function generateDocumentPdf(doc: any, company: any): Promise<Buffe
     } else {
       pdf.text("");
     }
-    if (doc.modeReglement) pdf.text(`Mode de règlement : ${doc.modeReglement}`, 40);
-    if (doc.conditionsPaiement) pdf.text(`Conditions : ${doc.conditionsPaiement}`, 40);
     if (doc.vendeur) pdf.text(`Vendeur : ${doc.vendeur}`, 40);
     if (doc.reference) pdf.text(`Réf. : ${doc.reference}`, 40);
+    if (!isBL) {
+      if (doc.modeReglement) pdf.text(`Mode de règlement : ${doc.modeReglement}`, 40);
+      if (doc.conditionsPaiement) pdf.text(`Conditions : ${doc.conditionsPaiement}`, 40);
+    }
 
     // ── CLIENT BLOCK ───────────────────────────────────────────────────
+    const doitLabel = isBL ? "LIVRER À :" : "DOIT :";
     const clientY = pdf.y + 8;
     pdf
       .rect(40, clientY, W, 18)
@@ -78,7 +83,7 @@ export async function generateDocumentPdf(doc: any, company: any): Promise<Buffe
       .fillColor("black")
       .fontSize(9)
       .font("Helvetica-Bold")
-      .text("DOIT :", 44, clientY + 4);
+      .text(doitLabel, 44, clientY + 4);
     pdf.y = clientY + 22;
     pdf.font("Helvetica");
     const client = doc.client;
@@ -87,95 +92,145 @@ export async function generateDocumentPdf(doc: any, company: any): Promise<Buffe
       if (client.address) pdf.text(client.address, 44);
       if (client.city) pdf.text(client.city, 44);
       if (client.phone) pdf.text(`Tél : ${client.phone}`, 44);
-      if (client.email) pdf.text(`Email : ${client.email}`, 44);
       if (client.fiscalNumber) pdf.text(`N° Fiscal : ${client.fiscalNumber}`, 44);
     }
     pdf.y += 8;
 
     // ── LINES TABLE ────────────────────────────────────────────────────
-    const cols = { ref: 40, des: 100, qty: 295, unit: 335, pu: 375, rem: 430, mont: 470 };
-    const colW = { ref: 58, des: 193, qty: 38, unit: 38, pu: 53, rem: 38, mont: 71 };
-
+    // Colonnes BL : REF | DESIGNATION | QTÉ | UNITÉ | DÉPÔT
+    // Colonnes autres : REF | DESIGNATION | QTÉ | UNITÉ | PRIX HT | REM% | MONTANT
     const tableHeaderY = pdf.y;
     pdf.rect(40, tableHeaderY, W, 16).fill("#1a1a2e");
-    pdf
-      .fillColor("white")
-      .fontSize(8)
-      .font("Helvetica-Bold");
-    const headers = ["RÉFERENCE", "DESIGNATION", "QTÉ", "UNITÉ", "PRIX HT", "REM%", "MONTANT"];
-    const colKeys = Object.keys(cols) as Array<keyof typeof cols>;
-    headers.forEach((h, i) => {
-      const key = colKeys[i];
-      pdf.text(h, cols[key], tableHeaderY + 4, { width: colW[key], align: i >= 2 ? "right" : "left" });
-    });
-    pdf.fillColor("black").font("Helvetica");
+    pdf.fillColor("white").fontSize(8).font("Helvetica-Bold");
 
-    let rowY = tableHeaderY + 18;
-    const lines: any[] = doc.lines ?? [];
-    lines.forEach((line, idx) => {
-      if (rowY > 730) {
-        pdf.addPage();
-        rowY = 40;
+    if (isBL) {
+      const cols = { ref: 40, des: 120, qty: 330, unit: 375, depot: 420 };
+      const colW = { ref: 78, des: 208, qty: 43, unit: 43, depot: 91 };
+      const headers = ["RÉFÉRENCE", "DÉSIGNATION", "QTÉ", "UNITÉ", "DÉPÔT"];
+      const keys = Object.keys(cols) as Array<keyof typeof cols>;
+      headers.forEach((h, i) => {
+        const key = keys[i];
+        pdf.text(h, cols[key], tableHeaderY + 4, { width: colW[key], align: i >= 2 ? "right" : "left" });
+      });
+      pdf.fillColor("black").font("Helvetica");
+
+      let rowY = tableHeaderY + 18;
+      const lines: any[] = doc.lines ?? [];
+      lines.forEach((line, idx) => {
+        if (rowY > 730) { pdf.addPage(); rowY = 40; }
+        const bg = idx % 2 === 0 ? "#ffffff" : "#f9f9f9";
+        pdf.rect(40, rowY, W, 14).fill(bg);
+        pdf.fillColor("black").fontSize(8).font("Helvetica");
+        pdf.text(line.articleRef ?? line.reference ?? "", cols.ref, rowY + 3, { width: colW.ref });
+        pdf.text(line.designation ?? "", cols.des, rowY + 3, { width: colW.des });
+        pdf.text(String(line.quantite ?? ""), cols.qty, rowY + 3, { width: colW.qty, align: "right" });
+        pdf.text(line.unite ?? "", cols.unit, rowY + 3, { width: colW.unit, align: "right" });
+        pdf.text(line.depot ?? "", cols.depot, rowY + 3, { width: colW.depot, align: "right" });
+        rowY += 14;
+      });
+      pdf.rect(40, rowY, W, 1).fill("#cccccc");
+      pdf.y = rowY + 8;
+
+      // ── NOTES (BL) ─────────────────────────────────────────────────
+      if (doc.notes) {
+        pdf.fontSize(8).fillColor("black").text(`Notes : ${doc.notes}`, 40);
+        pdf.y += 4;
       }
-      const bg = idx % 2 === 0 ? "#ffffff" : "#f9f9f9";
-      pdf.rect(40, rowY, W, 14).fill(bg);
-      pdf.fillColor("black").fontSize(8).font("Helvetica");
-      const montant = line.montantHt ?? (line.prixUnitaire * line.quantite * (1 - (line.remisePct ?? 0) / 100));
-      pdf.text(line.articleRef ?? "", cols.ref, rowY + 3, { width: colW.ref });
-      pdf.text(line.designation ?? "", cols.des, rowY + 3, { width: colW.des });
-      pdf.text(String(line.quantite ?? ""), cols.qty, rowY + 3, { width: colW.qty, align: "right" });
-      pdf.text(line.unite ?? "", cols.unit, rowY + 3, { width: colW.unit, align: "right" });
-      pdf.text(fmt(line.prixUnitaire ?? 0), cols.pu, rowY + 3, { width: colW.pu, align: "right" });
-      pdf.text(line.remisePct ? `${line.remisePct}%` : "", cols.rem, rowY + 3, { width: colW.rem, align: "right" });
-      pdf.text(fmt(montant), cols.mont, rowY + 3, { width: colW.mont, align: "right" });
-      rowY += 14;
-    });
-    pdf.rect(40, rowY, W, 1).fill("#cccccc");
-    pdf.y = rowY + 8;
 
-    // ── TOTALS ─────────────────────────────────────────────────────────
-    const totX = 350;
-    const totLW = 110;
-    const totVW = 90;
-    const totals: Array<[string, number, boolean?]> = [];
-    if (doc.totalHt != null) totals.push(["Total HT", doc.totalHt]);
-    if (doc.totalRemise != null && doc.totalRemise > 0) totals.push(["Remise", -doc.totalRemise]);
-    if (!doc.tvaPourMemoire && doc.totalTva != null) {
-      totals.push([`TVA (${company.tvaRate ?? 18}%)`, doc.totalTva]);
-    } else if (doc.tvaPourMemoire) {
-      totals.push(["TVA (pour mémoire)", doc.totalTva ?? 0]);
-    }
-    totals.push(["NET À PAYER", doc.totalTtc ?? 0, true]);
+      // ── SIGNATURE ROW (BL) ─────────────────────────────────────────
+      const sigY = Math.max(pdf.y + 20, pdf.page.height - 160);
+      const cellW = W / 4;
+      const sigH = 60;
+      const sigLabels = ["Cachet et signature", "Vendeur", "Magasin", "Client"];
+      const sigValues = [null, doc.vendeur ?? "", null, null];
+      sigLabels.forEach((label, i) => {
+        const x = 40 + i * cellW;
+        pdf.rect(x, sigY, cellW, sigH).stroke("#cccccc");
+        pdf.fontSize(8).font("Helvetica-Bold").fillColor("black")
+          .text(label.toUpperCase(), x + 4, sigY + 4, { width: cellW - 8 });
+        if (sigValues[i]) {
+          pdf.fontSize(8).font("Helvetica")
+            .text(sigValues[i] as string, x + 4, sigY + 18, { width: cellW - 8 });
+        }
+      });
+      pdf.y = sigY + sigH + 8;
 
-    let totY = pdf.y;
-    totals.forEach(([label, value, bold]) => {
-      if (bold) {
-        pdf.rect(totX - 4, totY - 2, totLW + totVW + 8, 18).fill("#1a1a2e");
-        pdf.fillColor("white").font("Helvetica-Bold").fontSize(10);
-      } else {
-        pdf.fillColor("black").font("Helvetica").fontSize(9);
+    } else {
+      // ── TABLE AVEC PRIX (factures, devis, avoirs, proformas) ────────
+      const cols = { ref: 40, des: 100, qty: 295, unit: 335, pu: 375, rem: 430, mont: 470 };
+      const colW = { ref: 58, des: 193, qty: 38, unit: 38, pu: 53, rem: 38, mont: 71 };
+      const headers = ["RÉFÉRENCE", "DÉSIGNATION", "QTÉ", "UNITÉ", "PRIX HT", "REM%", "MONTANT"];
+      const colKeys = Object.keys(cols) as Array<keyof typeof cols>;
+      headers.forEach((h, i) => {
+        const key = colKeys[i];
+        pdf.text(h, cols[key], tableHeaderY + 4, { width: colW[key], align: i >= 2 ? "right" : "left" });
+      });
+      pdf.fillColor("black").font("Helvetica");
+
+      let rowY = tableHeaderY + 18;
+      const lines: any[] = doc.lines ?? [];
+      lines.forEach((line, idx) => {
+        if (rowY > 730) { pdf.addPage(); rowY = 40; }
+        const bg = idx % 2 === 0 ? "#ffffff" : "#f9f9f9";
+        pdf.rect(40, rowY, W, 14).fill(bg);
+        pdf.fillColor("black").fontSize(8).font("Helvetica");
+        const montant = line.montantHt ?? (line.prixUnitaire * line.quantite * (1 - (line.remisePct ?? 0) / 100));
+        pdf.text(line.articleRef ?? line.reference ?? "", cols.ref, rowY + 3, { width: colW.ref });
+        pdf.text(line.designation ?? "", cols.des, rowY + 3, { width: colW.des });
+        pdf.text(String(line.quantite ?? ""), cols.qty, rowY + 3, { width: colW.qty, align: "right" });
+        pdf.text(line.unite ?? "", cols.unit, rowY + 3, { width: colW.unit, align: "right" });
+        pdf.text(fmt(line.prixUnitaire ?? 0), cols.pu, rowY + 3, { width: colW.pu, align: "right" });
+        pdf.text(line.remisePct ? `${line.remisePct}%` : "", cols.rem, rowY + 3, { width: colW.rem, align: "right" });
+        pdf.text(fmt(montant), cols.mont, rowY + 3, { width: colW.mont, align: "right" });
+        rowY += 14;
+      });
+      pdf.rect(40, rowY, W, 1).fill("#cccccc");
+      pdf.y = rowY + 8;
+
+      // ── TOTALS ───────────────────────────────────────────────────────
+      const totX = 350;
+      const totLW = 110;
+      const totVW = 90;
+      const totals: Array<[string, number, boolean?]> = [];
+      if (doc.totalHt != null) totals.push(["Total HT", doc.totalHt]);
+      if (doc.totalRemise != null && doc.totalRemise > 0) totals.push(["Remise", -doc.totalRemise]);
+      if (!doc.tvaPourMemoire && doc.totalTva != null) {
+        totals.push([`TVA (${company.tvaRate ?? 18}%)`, doc.totalTva]);
+      } else if (doc.tvaPourMemoire) {
+        totals.push(["TVA (pour mémoire)", doc.totalTva ?? 0]);
       }
-      pdf.text(label, totX, totY, { width: totLW });
-      pdf.text(`${fmt(Math.abs(value))} ${currency}`, totX + totLW, totY, { width: totVW, align: "right" });
-      totY += bold ? 20 : 14;
-    });
-    pdf.fillColor("black").font("Helvetica").fontSize(9);
-    pdf.y = totY + 12;
+      totals.push(["NET À PAYER", doc.totalTtc ?? 0, true]);
 
-    // ── BANK ACCOUNTS ──────────────────────────────────────────────────
-    if (company.bankAccounts) {
-      pdf.fontSize(8).text("Coordonnées bancaires :", 40);
-      pdf.text(company.bankAccounts, 40, pdf.y, { lineGap: 1 });
-      pdf.y += 6;
-    }
+      let totY = pdf.y;
+      totals.forEach(([label, value, bold]) => {
+        if (bold) {
+          pdf.rect(totX - 4, totY - 2, totLW + totVW + 8, 18).fill("#1a1a2e");
+          pdf.fillColor("white").font("Helvetica-Bold").fontSize(10);
+        } else {
+          pdf.fillColor("black").font("Helvetica").fontSize(9);
+        }
+        pdf.text(label, totX, totY, { width: totLW });
+        pdf.text(`${fmt(Math.abs(value))} ${currency}`, totX + totLW, totY, { width: totVW, align: "right" });
+        totY += bold ? 20 : 14;
+      });
+      pdf.fillColor("black").font("Helvetica").fontSize(9);
+      pdf.y = totY + 12;
 
-    // ── NOTES ──────────────────────────────────────────────────────────
-    if (doc.notes) {
-      pdf.fontSize(8).text(`Notes : ${doc.notes}`, 40);
+      // ── BANK ACCOUNTS ─────────────────────────────────────────────
+      if (company.bankAccounts) {
+        pdf.fontSize(8).text("Coordonnées bancaires :", 40);
+        pdf.text(company.bankAccounts, 40, pdf.y, { lineGap: 1 });
+        pdf.y += 6;
+      }
+
+      // ── NOTES ─────────────────────────────────────────────────────
+      if (doc.notes) {
+        pdf.fontSize(8).text(`Notes : ${doc.notes}`, 40);
+      }
     }
 
     // ── LEGAL FOOTER ───────────────────────────────────────────────────
-    if (company.legalFooter) {
+    if (company.legalFooter && showPrices) {
       const footerY = pdf.page.height - 60;
       pdf
         .fontSize(7)
