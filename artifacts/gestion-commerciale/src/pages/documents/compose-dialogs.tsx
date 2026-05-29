@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
-import { Send, Download, MessageCircle } from "lucide-react";
+import { Send, Download, MessageCircle, Paperclip, X, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -95,17 +95,42 @@ export function EmailComposeDialog({ open, onClose, doc, company }: EmailCompose
   const [subject, setSubject] = useState(() => buildDefaultSubject(doc, company));
   const [body, setBody] = useState(() => buildDefaultMessage(doc, company));
   const [sending, setSending] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const hasSmtp = !!company?.smtpHost;
+  const printUrl = `/documents/${doc.id}/print`;
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    if (file && file.type !== "application/pdf") {
+      toast.error("Veuillez sélectionner un fichier PDF");
+      return;
+    }
+    setUploadedFile(file);
+  }
+
+  function removeFile() {
+    setUploadedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
 
   async function handleSend() {
     if (!to.trim()) { toast.error("Veuillez saisir l'adresse email du destinataire"); return; }
     setSending(true);
     try {
+      let pdfBase64: string | undefined;
+      if (uploadedFile) {
+        const arrayBuffer = await uploadedFile.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = "";
+        bytes.forEach((b) => { binary += String.fromCharCode(b); });
+        pdfBase64 = btoa(binary);
+      }
       const r = await fetch(`/api/documents/${doc.id}/send-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: to.trim(), subject, body }),
+        body: JSON.stringify({ to: to.trim(), subject, body, pdfBase64 }),
       });
       const data = await r.json();
       if (!r.ok) throw new Error(data.error ?? "Erreur lors de l'envoi");
@@ -156,13 +181,60 @@ export function EmailComposeDialog({ open, onClose, doc, company }: EmailCompose
             <Textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              rows={10}
+              rows={8}
               className="mt-1 font-mono text-sm"
             />
           </div>
-          <div className="flex items-center gap-2 rounded-md bg-green-50 border border-green-200 px-3 py-2 text-sm text-green-800">
-            <span className="font-medium">Pièce jointe :</span>
-            <span>{doc.numero}.pdf (généré automatiquement)</span>
+
+          {/* Pièce jointe PDF */}
+          <div className="rounded-md border px-4 py-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Pièce jointe PDF</span>
+              <a
+                href={printUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs text-blue-600 hover:underline"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Ouvrir la version imprimable
+              </a>
+            </div>
+
+            {uploadedFile ? (
+              <div className="flex items-center gap-2 rounded bg-green-50 border border-green-200 px-3 py-2 text-sm text-green-800">
+                <Paperclip className="w-4 h-4 shrink-0" />
+                <span className="flex-1 truncate">{uploadedFile.name}</span>
+                <button onClick={removeFile} className="text-green-700 hover:text-red-600">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>PDF généré automatiquement (approximatif)</span>
+                  <span className="text-xs">— ou —</span>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-1 text-blue-600 hover:underline text-xs"
+                  >
+                    <Paperclip className="w-3 h-3" />
+                    Joindre votre propre PDF
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Pour une mise en page exacte : ouvrez la version imprimable → Imprimer → Enregistrer en PDF → joignez le fichier ici.
+                </p>
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={handleFileChange}
+            />
           </div>
         </div>
 

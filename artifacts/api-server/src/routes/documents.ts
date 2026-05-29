@@ -433,7 +433,9 @@ router.get("/documents/:id/pdf", async (req, res): Promise<void> => {
 router.post("/documents/:id/send-email", async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (isNaN(id)) { res.status(400).json({ error: "ID invalide" }); return; }
-  const { to, subject, body } = req.body as { to: string; subject: string; body: string };
+  const { to, subject, body, pdfBase64 } = req.body as {
+    to: string; subject: string; body: string; pdfBase64?: string;
+  };
   if (!to || !subject) { res.status(400).json({ error: "Destinataire et sujet requis" }); return; }
   const doc = await loadDocument(id);
   if (!doc) { res.status(404).json({ error: "Document introuvable" }); return; }
@@ -442,7 +444,10 @@ router.post("/documents/:id/send-email", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Configuration SMTP manquante — veuillez renseigner les paramètres SMTP" });
     return;
   }
-  const pdfBuffer = await generateDocumentPdf(doc, companyRow ?? {});
+  // Utilise le PDF fourni par le client (base64) ou génère un PDF automatiquement
+  const pdfBuffer = pdfBase64
+    ? Buffer.from(pdfBase64, "base64")
+    : await generateDocumentPdf(doc, companyRow ?? {});
   await sendEmail({
     smtp: {
       host: companyRow.smtpHost,
