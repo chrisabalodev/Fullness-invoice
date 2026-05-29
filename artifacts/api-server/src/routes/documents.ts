@@ -23,7 +23,7 @@ import {
 import { generateNumero } from "../lib/numero";
 import { computeTotals, computeLineMontantHt } from "../lib/totals";
 import { generateDocumentPdf } from "../lib/pdf";
-import { sendEmail } from "../lib/email";
+import { sendEmail, testSmtpConnection } from "../lib/email";
 
 const router: IRouter = Router();
 
@@ -466,9 +466,9 @@ router.post("/company/test-smtp", async (req, res): Promise<void> => {
   const { host, port, user, password, fromName, fromEmail, secure } = req.body as {
     host: string; port: number; user: string; password: string; fromName: string; fromEmail: string; secure: boolean;
   };
-  const { testSmtpConnection } = await import("../lib/email.js");
+  if (!host) { res.status(400).json({ success: false, error: "Hôte SMTP requis" }); return; }
   try {
-    await testSmtpConnection({ host, port: port ?? 587, user, password, fromName, fromEmail, secure: secure ?? false });
+    await testSmtpConnection({ host, port: Number(port) || 587, user: user ?? "", password: password ?? "", fromName: fromName ?? "", fromEmail: fromEmail ?? "", secure: secure ?? false });
     res.json({ success: true, message: "Connexion SMTP réussie" });
   } catch (e: any) {
     res.status(400).json({ success: false, error: e.message ?? "Échec de la connexion SMTP" });
