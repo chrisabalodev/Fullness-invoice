@@ -28,6 +28,7 @@ import {
   FileText,
   Mail,
   MessageCircle,
+  Download,
 } from "lucide-react";
 import { EmailComposeDialog, WhatsAppComposeDialog } from "./compose-dialogs";
 import { PageHeader } from "@/components/page-header";
@@ -222,6 +223,9 @@ export default function DocumentDetailPage({ id }: { id: number }) {
             </Button>
             <Button variant="outline" onClick={() => setWhatsAppDialogOpen(true)} title="Envoyer par WhatsApp" className="text-green-600 border-green-600 hover:bg-green-50">
               <MessageCircle className="w-4 h-4 mr-2" /> WhatsApp
+            </Button>
+            <Button variant="outline" onClick={() => window.open(`/api/documents/${doc.id}/pdf`, "_blank")} title="Télécharger le PDF (généré)">
+              <Download className="w-4 h-4 mr-2" /> PDF
             </Button>
             <Button onClick={() => window.open(printUrl, "_blank")}>
               <Printer className="w-4 h-4 mr-2" /> Imprimer / PDF
