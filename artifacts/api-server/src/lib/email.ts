@@ -20,18 +20,26 @@ interface SendEmailOptions {
   attachments?: Array<{ filename: string; content: Buffer; contentType: string }>;
 }
 
+function buildTransportConfig(smtp: SmtpConfig) {
+  const port = Number(smtp.port) || 587;
+  // secure=true pour SSL (port 465), STARTTLS sinon (587/25)
+  const secure = smtp.secure || port === 465;
+  return {
+    host: smtp.host,
+    port,
+    secure,
+    requireTLS: !secure && port === 587,
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
+    auth: smtp.user ? { user: smtp.user, pass: smtp.password } : undefined,
+    tls: { rejectUnauthorized: false },
+  };
+}
+
 export async function sendEmail(opts: SendEmailOptions): Promise<void> {
   const nodemailer = _require("nodemailer") as any;
-
-  const transporter = nodemailer.createTransport({
-    host: opts.smtp.host,
-    port: opts.smtp.port,
-    secure: opts.smtp.secure,
-    auth: {
-      user: opts.smtp.user,
-      pass: opts.smtp.password,
-    },
-  });
+  const transporter = nodemailer.createTransport(buildTransportConfig(opts.smtp));
 
   const from = opts.smtp.fromName
     ? `"${opts.smtp.fromName}" <${opts.smtp.fromEmail || opts.smtp.user}>`
@@ -52,11 +60,6 @@ export async function sendEmail(opts: SendEmailOptions): Promise<void> {
 
 export async function testSmtpConnection(smtp: SmtpConfig): Promise<void> {
   const nodemailer = _require("nodemailer") as any;
-  const transporter = nodemailer.createTransport({
-    host: smtp.host,
-    port: smtp.port,
-    secure: smtp.secure,
-    auth: { user: smtp.user, pass: smtp.password },
-  });
+  const transporter = nodemailer.createTransport(buildTransportConfig(smtp));
   await transporter.verify();
 }
