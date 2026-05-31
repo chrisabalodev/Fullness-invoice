@@ -553,7 +553,7 @@ export default function DocumentFormPage({ id }: { id?: number }) {
         <CardContent className="p-0 sm:p-6">
           {/* ── Vue tableau : md+ ─────────────────────────────── */}
           <div className="hidden md:block overflow-x-auto">
-            <Table>
+            <Table className="min-w-[1320px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[200px]">Article</TableHead>

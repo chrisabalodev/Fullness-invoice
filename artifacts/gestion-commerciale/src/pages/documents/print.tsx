@@ -170,20 +170,21 @@ export default function DocumentPrintPage({ id }: { id: number }) {
           </div>
         </div>
 
+        <div className="lines-wrap">
         <table className="lines-table">
           <thead>
             <tr>
               <th className="col-ref">REFERENCE</th>
               <th className="col-des">DESIGNATION</th>
-              <th className="col-num">QTE</th>
+              <th className="col-num col-sm">QTE</th>
               <th className="col-num">UNITE</th>
               {isBL && <th className="col-num">DEPOT</th>}
               {showPrices && (
                 <>
                   <th className="col-num">PRIX HT</th>
-                  <th className="col-num">R(%)</th>
+                  <th className="col-num col-sm">R(%)</th>
                   <th className="col-num">MONTANT HT</th>
-                  <th className="col-num">TVA%</th>
+                  <th className="col-num col-sm">TVA%</th>
                 </>
               )}
             </tr>
@@ -193,15 +194,15 @@ export default function DocumentPrintPage({ id }: { id: number }) {
               <tr key={l.id}>
                 <td className="col-ref mono">{l.reference}</td>
                 <td className="col-des">{l.designation}</td>
-                <td className="col-num">{formatMoney(l.quantite)}</td>
+                <td className="col-num col-sm">{formatMoney(l.quantite)}</td>
                 <td className="col-num">{l.unite}</td>
                 {isBL && <td className="col-num">{l.depot ?? ""}</td>}
                 {showPrices && (
                   <>
                     <td className="col-num">{formatMoneyDecimal(l.prixUnitaire)}</td>
-                    <td className="col-num">{formatMoney(l.remisePct)}</td>
+                    <td className="col-num col-sm">{formatMoney(l.remisePct)}</td>
                     <td className="col-num">{formatMoneyDecimal(l.montantHt)}</td>
-                    <td className="col-num">{l.tvaRate}</td>
+                    <td className="col-num col-sm">{l.tvaRate}</td>
                   </>
                 )}
               </tr>
@@ -213,6 +214,7 @@ export default function DocumentPrintPage({ id }: { id: number }) {
             ))}
           </tbody>
         </table>
+        </div>
 
         {showPrices && (
           <div className="bottom-row">
@@ -367,6 +369,7 @@ const PRINT_CSS = `
   .barcode-numero { font-family: 'Courier New', monospace; font-size: 9pt; letter-spacing: 1px; }
   .comptoir-box {
     border: 1px solid #000;
+    border-radius: 8px;
     padding: 4px 10px;
     text-align: center;
     font-size: 8.5pt;
@@ -400,17 +403,22 @@ const PRINT_CSS = `
     align-items: flex-start;
     gap: 10px;
     border: 1px solid #000;
-    border-top: none;
+    border-radius: 8px;
     padding: 6px 10px;
   }
   .client-label { font-weight: 700; font-size: 10pt; }
   .client-name { font-weight: 700; text-transform: uppercase; font-size: 11pt; }
   .client-meta { font-size: 9pt; color: #222; }
 
+  .lines-wrap {
+    margin-top: 6px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #000;
+  }
   .lines-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 6px;
     font-size: 9pt;
   }
   .lines-table th, .lines-table td {
@@ -418,6 +426,11 @@ const PRINT_CSS = `
     padding: 3px 5px;
     vertical-align: top;
   }
+  .lines-table tr > th:first-child,
+  .lines-table tr > td:first-child { border-left: none; }
+  .lines-table tr > th:last-child,
+  .lines-table tr > td:last-child { border-right: none; }
+  .lines-table thead tr:first-child th { border-top: none; }
   .lines-table thead th {
     background: #f0f0f0;
     font-weight: 700;
@@ -426,6 +439,7 @@ const PRINT_CSS = `
     text-align: center;
   }
   .lines-table .col-num { text-align: right; white-space: nowrap; width: 70px; }
+  .lines-table .col-sm { width: 42px; }
   .lines-table .col-ref { width: 80px; }
   .lines-table .col-des { width: auto; }
   .mono { font-family: 'Courier New', monospace; font-size: 8.5pt; }
@@ -441,6 +455,7 @@ const PRINT_CSS = `
   }
   .lettres-box {
     border: 1px solid #000;
+    border-radius: 8px;
     padding: 8px 10px;
     font-size: 9pt;
     display: flex;
@@ -451,7 +466,7 @@ const PRINT_CSS = `
   .lettres-text { font-style: italic; margin-top: 4px; flex: 1; }
   .meta-line { display: flex; gap: 20px; margin-top: 8px; font-size: 8.5pt; color: #333; }
 
-  .totals-box { border: 1px solid #000; }
+  .totals-box { border: 1px solid #000; border-radius: 8px; overflow: hidden; }
   .totals-row {
     display: flex;
     justify-content: space-between;
@@ -480,7 +495,7 @@ const PRINT_CSS = `
     padding-top: 4px;
   }
 
-  .reglements-box { margin-top: 8px; border: 1px solid #000; }
+  .reglements-box { margin-top: 8px; border: 1px solid #000; border-radius: 8px; overflow: hidden; }
   .reglements-title {
     background: #f0f0f0;
     padding: 3px 8px;
@@ -504,6 +519,8 @@ const PRINT_CSS = `
     grid-template-columns: repeat(4, 1fr);
     margin-top: 10px;
     border: 1px solid #000;
+    border-radius: 8px;
+    overflow: hidden;
   }
   .signature-cell {
     border-right: 1px solid #000;
