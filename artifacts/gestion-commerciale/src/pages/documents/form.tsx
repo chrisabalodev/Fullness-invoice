@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { Plus, Trash2, ArrowLeft, Save, UserPlus } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -149,6 +150,7 @@ export default function DocumentFormPage({ id }: { id?: number }) {
     });
 
   const { fields, append, remove } = useFieldArray({ control, name: "lines" });
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (editing && existing) {
@@ -552,7 +554,8 @@ export default function DocumentFormPage({ id }: { id?: number }) {
         </CardHeader>
         <CardContent className="p-0 sm:p-6">
           {/* ── Vue tableau : md+ ─────────────────────────────── */}
-          <div className="hidden md:block overflow-x-auto">
+          {!isMobile && (
+            <div className="overflow-x-auto">
             <Table className="min-w-[1320px]">
               <TableHeader>
                 <TableRow>
@@ -689,10 +692,12 @@ export default function DocumentFormPage({ id }: { id?: number }) {
                 })}
               </TableBody>
             </Table>
-          </div>
+            </div>
+          )}
 
           {/* ── Vue cartes : < md ─────────────────────────────── */}
-          <div className="flex flex-col gap-3 md:hidden px-4 pb-4">
+          {isMobile && (
+            <div className="flex flex-col gap-3 px-4 pb-4">
             {fields.map((f, idx) => {
               const l = watchedLines[idx];
               const qty = Number(l?.quantite) || 0;
@@ -839,7 +844,8 @@ export default function DocumentFormPage({ id }: { id?: number }) {
                 </div>
               );
             })}
-          </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
