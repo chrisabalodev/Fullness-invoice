@@ -6,6 +6,7 @@ import articlesRouter from "./articles";
 import documentsRouter from "./documents";
 import reglementsRouter from "./reglements";
 import dashboardRouter from "./dashboard";
+import dataRouter from "./data";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(articlesRouter);
 router.use(documentsRouter);
 router.use(reglementsRouter);
 router.use(dashboardRouter);
+router.use(dataRouter);
 
 export default router;

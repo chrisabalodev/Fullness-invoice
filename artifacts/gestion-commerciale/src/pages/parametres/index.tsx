@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -7,13 +7,34 @@ import {
   getGetCompanyQueryKey,
 } from "@workspace/api-client-react";
 import { toast } from "sonner";
-import { Building2, Save, Wifi, WifiOff, Eye } from "lucide-react";
+import {
+  Building2,
+  Save,
+  Wifi,
+  WifiOff,
+  Eye,
+  Database,
+  Download,
+  Upload,
+  RotateCcw,
+} from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface CompanyFormValues {
   name: string;
@@ -57,6 +78,86 @@ export default function ParametresPage() {
   });
 
   const { register, handleSubmit, reset, getValues } = useForm<CompanyFormValues>();
+
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleExport() {
+    setExporting(true);
+    try {
+      const r = await fetch("/api/data/export");
+      if (!r.ok) throw new Error("export failed");
+      const blob = await r.blob();
+      const disposition = r.headers.get("Content-Disposition");
+      const match = disposition?.match(/filename="(.+)"/);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = match?.[1] ?? "sauvegarde-gescom.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("Sauvegarde téléchargée");
+    } catch {
+      toast.error("Échec de la sauvegarde");
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setImporting(true);
+    try {
+      const text = await file.text();
+      let json: unknown;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        toast.error("Fichier JSON illisible");
+        return;
+      }
+      const r = await fetch("/api/data/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(json),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data.success) {
+        toast.error(data.error ?? "Échec de l'import");
+        return;
+      }
+      await qc.invalidateQueries();
+      toast.success("Données importées avec succès");
+    } catch {
+      toast.error("Erreur réseau lors de l'import");
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  async function handleReset() {
+    setResetting(true);
+    try {
+      const r = await fetch("/api/data/reset", { method: "POST" });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data.success) {
+        toast.error(data.error ?? "Échec de la réinitialisation");
+        return;
+      }
+      await qc.invalidateQueries();
+      toast.success("Données réinitialisées");
+    } catch {
+      toast.error("Erreur réseau lors de la réinitialisation");
+    } finally {
+      setResetting(false);
+    }
+  }
 
   async function testSmtp() {
     const v = getValues();
@@ -305,6 +406,109 @@ export default function ParametresPage() {
           </Button>
         </div>
       </form>
+
+      <Card className="max-w-4xl border-destructive/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="w-5 h-5 text-primary" /> Gestion des données
+          </CardTitle>
+          <CardDescription>
+            Sauvegardez vos données, restaurez une sauvegarde, ou réinitialisez l'application.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-medium">Sauvegarder les données</p>
+              <p className="text-sm text-muted-foreground">
+                Téléchargez un fichier JSON contenant tous vos clients, articles, documents et règlements.
+              </p>
+            </div>
+            <Button type="button" variant="outline" onClick={handleExport} disabled={exporting}>
+              <Download className="w-4 h-4 mr-2" />
+              {exporting ? "Préparation…" : "Sauvegarder"}
+            </Button>
+          </div>
+
+          <div className="border-t pt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-medium">Importer une sauvegarde</p>
+              <p className="text-sm text-muted-foreground">
+                Restaure une sauvegarde. Toutes les données actuelles seront remplacées.
+              </p>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={handleImportFile}
+            />
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button type="button" variant="outline" disabled={importing}>
+                  <Upload className="w-4 h-4 mr-2" />
+                  {importing ? "Import en cours…" : "Importer"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Importer une sauvegarde ?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Cette action remplacera définitivement toutes les données actuelles (clients,
+                    articles, documents, règlements) par le contenu du fichier choisi. Cette
+                    opération est irréversible. Pensez à sauvegarder vos données avant de continuer.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => fileInputRef.current?.click()}>
+                    Choisir un fichier
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+
+          <div className="border-t pt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-medium text-destructive">Réinitialiser les données</p>
+              <p className="text-sm text-muted-foreground">
+                Supprime tous les clients, articles, documents et règlements. Les paramètres de
+                l'entreprise sont conservés.
+              </p>
+            </div>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button type="button" variant="destructive" disabled={resetting}>
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  {resetting ? "Réinitialisation…" : "Réinitialiser"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Réinitialiser toutes les données ?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Tous les clients, articles, documents et règlements seront définitivement
+                    supprimés. Les paramètres de l'entreprise (identité, comptoir, TVA, SMTP) seront
+                    conservés. Cette opération est irréversible. Pensez à sauvegarder vos données
+                    avant de continuer.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleReset}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Réinitialiser
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

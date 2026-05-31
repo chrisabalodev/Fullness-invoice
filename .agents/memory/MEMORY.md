@@ -1,2 +1,3 @@
 - [Runtime error overlay & benign aborts](runtime-error-overlay.md) — Replit runtime-error-modal catches benign React Query AbortErrors and blocks the UI; suppress via the plugin `filter` option.
 - [RHF duplicate register across responsive views](rhf-responsive-duplicate-register.md) — two CSS-toggled layouts both mounting `register("name")` freeze uncontrolled inputs; render one view at a time with `useIsMobile()`.
+- [Data backup/import/reset](data-backup-import.md) — JSON full-table backup: revive timestamp strings to Date, realign sequences with 3-arg setval, guard destructive import with version + non-empty company.
