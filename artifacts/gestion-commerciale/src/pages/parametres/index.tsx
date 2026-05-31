@@ -7,7 +7,7 @@ import {
   getGetCompanyQueryKey,
 } from "@workspace/api-client-react";
 import { toast } from "sonner";
-import { Building2, Save, Wifi, WifiOff } from "lucide-react";
+import { Building2, Save, Wifi, WifiOff, Eye } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,7 @@ interface CompanyFormValues {
   smtpFromName: string;
   smtpFromEmail: string;
   smtpSecure: boolean;
+  showHeader: boolean;
 }
 
 export default function ParametresPage() {
@@ -110,6 +111,22 @@ export default function ParametresPage() {
             <CardDescription>Apparaît dans le bandeau supérieur des factures et bons.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-4">
+            <div className="col-span-2 flex items-center justify-between p-3 rounded-md bg-muted/50">
+              <div>
+                <Label htmlFor="showHeader" className="cursor-pointer flex items-center gap-2">
+                  <Eye className="w-4 h-4" /> Afficher l'entête de l'entreprise sur les documents
+                </Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Décochez pour masquer le bloc société, code-barres et comptoir sur les impressions.
+                </p>
+              </div>
+              <input
+                id="showHeader"
+                type="checkbox"
+                className="w-5 h-5 accent-primary"
+                {...register("showHeader")}
+              />
+            </div>
             <div className="col-span-2">
               <Label htmlFor="name">Raison sociale</Label>
               <Input id="name" {...register("name", { required: true })} />

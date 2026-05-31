@@ -60,6 +60,7 @@ export interface Company {
   smtpFromName: string;
   smtpFromEmail: string;
   smtpSecure: boolean;
+  showHeader: boolean;
 }
 
 export interface UpdateCompanyBody {
@@ -86,6 +87,7 @@ export interface UpdateCompanyBody {
   smtpFromName: string;
   smtpFromEmail: string;
   smtpSecure: boolean;
+  showHeader: boolean;
 }
 
 export interface Client {

@@ -562,8 +562,10 @@ components:
           type: string
         smtpSecure:
           type: boolean
+        showHeader:
+          type: boolean
       required:
-        [id, name, description, address, phone, fiscalNumber, rccm, bankAccounts, modesReglement, conditionsPaiement, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter, emailSignature, smtpHost, smtpPort, smtpUser, smtpPassword, smtpFromName, smtpFromEmail, smtpSecure]
+        [id, name, description, address, phone, fiscalNumber, rccm, bankAccounts, modesReglement, conditionsPaiement, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter, emailSignature, smtpHost, smtpPort, smtpUser, smtpPassword, smtpFromName, smtpFromEmail, smtpSecure, showHeader]
 
     UpdateCompanyBody:
       type: object
@@ -615,8 +617,10 @@ components:
           type: string
         smtpSecure:
           type: boolean
+        showHeader:
+          type: boolean
       required:
-        [name, description, address, phone, fiscalNumber, rccm, bankAccounts, modesReglement, conditionsPaiement, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter, emailSignature, smtpHost, smtpPort, smtpUser, smtpPassword, smtpFromName, smtpFromEmail, smtpSecure]
+        [name, description, address, phone, fiscalNumber, rccm, bankAccounts, modesReglement, conditionsPaiement, comptoirName, comptoirCity, comptoirPhone, tvaRate, currency, legalFooter, emailSignature, smtpHost, smtpPort, smtpUser, smtpPassword, smtpFromName, smtpFromEmail, smtpSecure, showHeader]
 
     Client:
       type: object

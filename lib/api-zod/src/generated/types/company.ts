@@ -36,4 +36,5 @@ export interface Company {
   smtpFromName: string;
   smtpFromEmail: string;
   smtpSecure: boolean;
+  showHeader: boolean;
 }

@@ -33,6 +33,7 @@ export const companyTable = pgTable("company", {
   smtpFromName: text("smtp_from_name").notNull().default(""),
   smtpFromEmail: text("smtp_from_email").notNull().default(""),
   smtpSecure: boolean("smtp_secure").notNull().default(false),
+  showHeader: boolean("show_header").notNull().default(true),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow()

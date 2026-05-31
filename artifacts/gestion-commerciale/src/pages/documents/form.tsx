@@ -550,96 +550,256 @@ export default function DocumentFormPage({ id }: { id?: number }) {
             <Plus className="w-4 h-4 mr-2" /> Ajouter une ligne
           </Button>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[180px]">Article</TableHead>
-                <TableHead className="w-[130px]">Référence</TableHead>
-                <TableHead className="w-[160px]">Désignation</TableHead>
-                <TableHead className="w-[70px]">Qté</TableHead>
-                <TableHead className="w-[80px]">Unité</TableHead>
-                <TableHead className="w-[110px]">Prix HT</TableHead>
-                <TableHead className="w-[80px]">TVA %</TableHead>
-                <TableHead className="w-[110px]">Prix TTC</TableHead>
-                <TableHead className="w-[70px]">R %</TableHead>
-                <TableHead className="w-[120px] text-right">Montant HT</TableHead>
-                <TableHead className="w-[40px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {fields.map((f, idx) => {
-                const l = watchedLines[idx];
-                const qty = Number(l?.quantite) || 0;
-                const pu = Number(l?.prixUnitaire) || 0;
-                const rem = Number(l?.remisePct) || 0;
-                const tva = Number(l?.tvaRate) || 0;
-                const montant = qty * pu * (1 - rem / 100);
-                const prixTtc =
-                  watchedMemoire || !watchedApplyTva ? pu : pu * (1 + tva / 100);
-                return (
-                  <TableRow key={f.id}>
-                    <TableCell>
-                      <ArticleCombobox
-                        value={l?.reference ?? ""}
-                        onSelect={(a) => handlePickArticle(idx, a)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        {...register(`lines.${idx}.reference`)}
-                        className="h-9"
-                        placeholder="Réf."
-                      />
-                    </TableCell>
-                    <TableCell className="max-w-[160px] w-[160px] overflow-hidden">
-                      <Controller
-                        control={control}
-                        name={`lines.${idx}.designation`}
-                        render={({ field }) => (
-                          <button
-                            type="button"
-                            onClick={() => setDesignEdit({ idx, value: field.value ?? "" })}
-                            className="w-full h-9 px-3 text-left text-sm border border-input rounded-md bg-background hover:bg-muted/50 truncate"
-                            title={field.value || "Cliquer pour saisir la désignation"}
-                          >
-                            {field.value ? (
-                              <span className="truncate">{field.value}</span>
-                            ) : (
-                              <span className="text-muted-foreground">Désignation…</span>
-                            )}
-                          </button>
-                        )}
-                      />
-                    </TableCell>
-                    <TableCell>
+        <CardContent className="p-0 sm:p-6">
+          {/* ── Vue tableau : md+ ─────────────────────────────── */}
+          <div className="hidden md:block overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[180px]">Article</TableHead>
+                  <TableHead className="w-[130px]">Référence</TableHead>
+                  <TableHead className="w-[160px]">Désignation</TableHead>
+                  <TableHead className="w-[70px]">Qté</TableHead>
+                  <TableHead className="w-[80px]">Unité</TableHead>
+                  <TableHead className="w-[110px]">Prix HT</TableHead>
+                  <TableHead className="w-[80px]">TVA %</TableHead>
+                  <TableHead className="w-[110px]">Prix TTC</TableHead>
+                  <TableHead className="w-[70px]">R %</TableHead>
+                  <TableHead className="w-[120px] text-right">Montant HT</TableHead>
+                  <TableHead className="w-[40px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {fields.map((f, idx) => {
+                  const l = watchedLines[idx];
+                  const qty = Number(l?.quantite) || 0;
+                  const pu = Number(l?.prixUnitaire) || 0;
+                  const rem = Number(l?.remisePct) || 0;
+                  const tva = Number(l?.tvaRate) || 0;
+                  const montant = qty * pu * (1 - rem / 100);
+                  const prixTtc =
+                    watchedMemoire || !watchedApplyTva ? pu : pu * (1 + tva / 100);
+                  return (
+                    <TableRow key={f.id}>
+                      <TableCell>
+                        <ArticleCombobox
+                          value={l?.reference ?? ""}
+                          onSelect={(a) => handlePickArticle(idx, a)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          {...register(`lines.${idx}.reference`)}
+                          className="h-9"
+                          placeholder="Réf."
+                        />
+                      </TableCell>
+                      <TableCell className="max-w-[160px] w-[160px] overflow-hidden">
+                        <Controller
+                          control={control}
+                          name={`lines.${idx}.designation`}
+                          render={({ field }) => (
+                            <button
+                              type="button"
+                              onClick={() => setDesignEdit({ idx, value: field.value ?? "" })}
+                              className="w-full h-9 px-3 text-left text-sm border border-input rounded-md bg-background hover:bg-muted/50 truncate"
+                              title={field.value || "Cliquer pour saisir la désignation"}
+                            >
+                              {field.value ? (
+                                <span className="truncate">{field.value}</span>
+                              ) : (
+                                <span className="text-muted-foreground">Désignation…</span>
+                              )}
+                            </button>
+                          )}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          step="any"
+                          {...register(`lines.${idx}.quantite`, { valueAsNumber: true })}
+                          className="h-9 text-right tabular-nums"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input {...register(`lines.${idx}.unite`)} className="h-9" />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          step="any"
+                          {...register(`lines.${idx}.prixUnitaire`, { valueAsNumber: true })}
+                          className="h-9 text-right tabular-nums"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          step="any"
+                          {...register(`lines.${idx}.tvaRate`, { valueAsNumber: true })}
+                          className="h-9 text-right tabular-nums"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          step="any"
+                          value={Number.isFinite(prixTtc) ? Math.round(prixTtc * 100) / 100 : 0}
+                          onChange={(e) => {
+                            const newTtc = Number(e.target.value) || 0;
+                            const t = Number(l?.tvaRate) || 0;
+                            const newHt =
+                              watchedMemoire || !watchedApplyTva
+                                ? newTtc
+                                : newTtc / (1 + t / 100);
+                            setValue(
+                              `lines.${idx}.prixUnitaire`,
+                              Math.round(newHt * 100) / 100,
+                              { shouldDirty: true },
+                            );
+                          }}
+                          className="h-9 text-right tabular-nums"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          step="any"
+                          {...register(`lines.${idx}.remisePct`, { valueAsNumber: true })}
+                          className="h-9 text-right tabular-nums"
+                        />
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums font-medium">
+                        {formatMoney(montant)} F
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => remove(idx)}
+                          disabled={fields.length === 1}
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* ── Vue cartes : < md ─────────────────────────────── */}
+          <div className="flex flex-col gap-3 md:hidden px-4 pb-4">
+            {fields.map((f, idx) => {
+              const l = watchedLines[idx];
+              const qty = Number(l?.quantite) || 0;
+              const pu = Number(l?.prixUnitaire) || 0;
+              const rem = Number(l?.remisePct) || 0;
+              const tva = Number(l?.tvaRate) || 0;
+              const montant = qty * pu * (1 - rem / 100);
+              const prixTtc =
+                watchedMemoire || !watchedApplyTva ? pu : pu * (1 + tva / 100);
+              return (
+                <div key={f.id} className="border border-border rounded-lg p-4 space-y-3 bg-background">
+                  {/* En-tête carte : numéro + bouton supprimer */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Ligne {idx + 1}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => remove(idx)}
+                      disabled={fields.length === 1}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+
+                  {/* Article + Désignation */}
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Article (recherche)</Label>
+                    <ArticleCombobox
+                      value={l?.reference ?? ""}
+                      onSelect={(a) => handlePickArticle(idx, a)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Désignation</Label>
+                    <Controller
+                      control={control}
+                      name={`lines.${idx}.designation`}
+                      render={({ field }) => (
+                        <button
+                          type="button"
+                          onClick={() => setDesignEdit({ idx, value: field.value ?? "" })}
+                          className="w-full h-10 px-3 text-left text-sm border border-input rounded-md bg-background hover:bg-muted/50"
+                        >
+                          {field.value ? (
+                            <span>{field.value}</span>
+                          ) : (
+                            <span className="text-muted-foreground">Cliquer pour saisir…</span>
+                          )}
+                        </button>
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Référence</Label>
+                    <Input
+                      {...register(`lines.${idx}.reference`)}
+                      className="h-10"
+                      placeholder="Réf."
+                    />
+                  </div>
+
+                  {/* Qté + Unité */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Quantité</Label>
                       <Input
                         type="number"
                         step="any"
                         {...register(`lines.${idx}.quantite`, { valueAsNumber: true })}
-                        className="h-9 text-right tabular-nums"
+                        className="h-10 text-right tabular-nums"
                       />
-                    </TableCell>
-                    <TableCell>
-                      <Input {...register(`lines.${idx}.unite`)} className="h-9" />
-                    </TableCell>
-                    <TableCell>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Unité</Label>
+                      <Input {...register(`lines.${idx}.unite`)} className="h-10" />
+                    </div>
+                  </div>
+
+                  {/* Prix HT + TVA % */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Prix HT</Label>
                       <Input
                         type="number"
                         step="any"
                         {...register(`lines.${idx}.prixUnitaire`, { valueAsNumber: true })}
-                        className="h-9 text-right tabular-nums"
+                        className="h-10 text-right tabular-nums"
                       />
-                    </TableCell>
-                    <TableCell>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">TVA %</Label>
                       <Input
                         type="number"
                         step="any"
                         {...register(`lines.${idx}.tvaRate`, { valueAsNumber: true })}
-                        className="h-9 text-right tabular-nums"
+                        className="h-10 text-right tabular-nums"
                       />
-                    </TableCell>
-                    <TableCell>
+                    </div>
+                  </div>
+
+                  {/* Prix TTC + R % */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Prix TTC</Label>
                       <Input
                         type="number"
                         step="any"
@@ -657,36 +817,29 @@ export default function DocumentFormPage({ id }: { id?: number }) {
                             { shouldDirty: true },
                           );
                         }}
-                        className="h-9 text-right tabular-nums"
+                        className="h-10 text-right tabular-nums"
                       />
-                    </TableCell>
-                    <TableCell>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-muted-foreground">Remise %</Label>
                       <Input
                         type="number"
                         step="any"
                         {...register(`lines.${idx}.remisePct`, { valueAsNumber: true })}
-                        className="h-9 text-right tabular-nums"
+                        className="h-10 text-right tabular-nums"
                       />
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums font-medium">
-                      {formatMoney(montant)} F
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => remove(idx)}
-                        disabled={fields.length === 1}
-                      >
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                    </div>
+                  </div>
+
+                  {/* Montant calculé */}
+                  <div className="flex justify-end pt-1 border-t border-border">
+                    <span className="text-xs text-muted-foreground mr-2">Montant HT :</span>
+                    <span className="font-semibold tabular-nums">{formatMoney(montant)} F</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </CardContent>
       </Card>
 

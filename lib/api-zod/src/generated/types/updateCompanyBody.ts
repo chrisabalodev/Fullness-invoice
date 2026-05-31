@@ -30,4 +30,5 @@ export interface UpdateCompanyBody {
   smtpFromName: string;
   smtpFromEmail: string;
   smtpSecure: boolean;
+  showHeader: boolean;
 }

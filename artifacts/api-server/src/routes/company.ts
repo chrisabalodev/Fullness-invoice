@@ -63,6 +63,7 @@ function serialize(row: NonNullable<Awaited<ReturnType<typeof getOrCreateCompany
     smtpFromName: row.smtpFromName ?? "",
     smtpFromEmail: row.smtpFromEmail ?? "",
     smtpSecure: row.smtpSecure ?? false,
+    showHeader: row.showHeader ?? true,
   };
 }
 

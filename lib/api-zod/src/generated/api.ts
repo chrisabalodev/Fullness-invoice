@@ -46,6 +46,7 @@ export const GetCompanyResponse = zod.object({
   smtpFromName: zod.string(),
   smtpFromEmail: zod.string(),
   smtpSecure: zod.boolean(),
+  showHeader: zod.boolean(),
 });
 
 /**
@@ -75,6 +76,7 @@ export const UpdateCompanyBody = zod.object({
   smtpFromName: zod.string(),
   smtpFromEmail: zod.string(),
   smtpSecure: zod.boolean(),
+  showHeader: zod.boolean(),
 });
 
 export const UpdateCompanyResponse = zod.object({
@@ -106,6 +108,7 @@ export const UpdateCompanyResponse = zod.object({
   smtpFromName: zod.string(),
   smtpFromEmail: zod.string(),
   smtpSecure: zod.boolean(),
+  showHeader: zod.boolean(),
 });
 
 /**

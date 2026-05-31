@@ -78,6 +78,7 @@ export default function DocumentPrintPage({ id }: { id: number }) {
     </div>
   );
 
+  const showHeader = company.showHeader !== false;
   const title = DOCUMENT_TYPE_TITLE_PRINT[doc.type] ?? doc.type.toUpperCase();
   const isDevis = doc.type === "devis";
   const isProforma = doc.type === "facture_proforma";
@@ -113,32 +114,34 @@ export default function DocumentPrintPage({ id }: { id: number }) {
       <style>{PRINT_CSS}</style>
       {toolbar}
       <div className="print-page">
-        <div className="print-top">
-          <div className="company-block">
-            <div className="company-name">{company.name}</div>
-            <div className="company-info">
-              <div>{company.address}</div>
-              <div>Tél : {company.phone}</div>
-              <div>N° Fiscal : {company.fiscalNumber}</div>
-              <div>RCCM : {company.rccm}</div>
-              {bankLines.map((line, i) => (
-                <div key={i}>{line}</div>
-              ))}
+        {showHeader && (
+          <div className="print-top">
+            <div className="company-block">
+              <div className="company-name">{company.name}</div>
+              <div className="company-info">
+                <div>{company.address}</div>
+                <div>Tél : {company.phone}</div>
+                <div>N° Fiscal : {company.fiscalNumber}</div>
+                <div>RCCM : {company.rccm}</div>
+                {bankLines.map((line, i) => (
+                  <div key={i}>{line}</div>
+                ))}
+              </div>
+            </div>
+            <div className="barcode-block">
+              <canvas ref={barcodeRef} className="barcode" />
+              <div className="barcode-numero">{doc.numero}</div>
+              <div className="comptoir-box">
+                <div className="comptoir-name">{company.comptoirName}</div>
+                <div>{company.comptoirCity}</div>
+                <div>Tél : {company.comptoirPhone}</div>
+              </div>
+            </div>
+            <div className="original-block">
+              <div className="original-text">{copyLabel}</div>
             </div>
           </div>
-          <div className="barcode-block">
-            <canvas ref={barcodeRef} className="barcode" />
-            <div className="barcode-numero">{doc.numero}</div>
-            <div className="comptoir-box">
-              <div className="comptoir-name">{company.comptoirName}</div>
-              <div>{company.comptoirCity}</div>
-              <div>Tél : {company.comptoirPhone}</div>
-            </div>
-          </div>
-          <div className="original-block">
-            <div className="original-text">{copyLabel}</div>
-          </div>
-        </div>
+        )}
 
         <div className="title-band">
           <div className="title-text">{title}</div>
@@ -324,6 +327,8 @@ const PRINT_CSS = `
     font-family: Arial, Helvetica, sans-serif;
     font-size: 10pt;
     line-height: 1.3;
+    border-radius: 6px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.10);
   }
   @media print {
     html, body { background: #fff; }
