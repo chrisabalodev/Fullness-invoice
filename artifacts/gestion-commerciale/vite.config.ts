@@ -31,7 +31,14 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    runtimeErrorOverlay(),
+    runtimeErrorOverlay({
+      filter: (error) => {
+        const message = error?.message ?? "";
+        return !/signal is aborted|aborted without reason|the operation was aborted|the user aborted a request/i.test(
+          message,
+        );
+      },
+    }),
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
       ? [

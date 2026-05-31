@@ -1,0 +1,1 @@
+- [Runtime error overlay & benign aborts](runtime-error-overlay.md) — Replit runtime-error-modal catches benign React Query AbortErrors and blocks the UI; suppress via the plugin `filter` option.
