@@ -327,8 +327,8 @@ const PRINT_CSS = `
     font-family: Arial, Helvetica, sans-serif;
     font-size: 10pt;
     line-height: 1.3;
-    border-radius: 6px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+    border-radius: 14px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.13);
   }
   @media print {
     html, body { background: #fff; }

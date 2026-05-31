@@ -556,17 +556,17 @@ export default function DocumentFormPage({ id }: { id?: number }) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[180px]">Article</TableHead>
-                  <TableHead className="w-[130px]">Référence</TableHead>
-                  <TableHead className="w-[160px]">Désignation</TableHead>
-                  <TableHead className="w-[70px]">Qté</TableHead>
-                  <TableHead className="w-[80px]">Unité</TableHead>
-                  <TableHead className="w-[110px]">Prix HT</TableHead>
-                  <TableHead className="w-[80px]">TVA %</TableHead>
-                  <TableHead className="w-[110px]">Prix TTC</TableHead>
-                  <TableHead className="w-[70px]">R %</TableHead>
-                  <TableHead className="w-[120px] text-right">Montant HT</TableHead>
-                  <TableHead className="w-[40px]"></TableHead>
+                  <TableHead className="w-[200px]">Article</TableHead>
+                  <TableHead className="w-[140px]">Référence</TableHead>
+                  <TableHead className="w-[200px]">Désignation</TableHead>
+                  <TableHead className="w-[90px]">Qté</TableHead>
+                  <TableHead className="w-[100px]">Unité</TableHead>
+                  <TableHead className="w-[130px]">Prix HT</TableHead>
+                  <TableHead className="w-[90px]">TVA %</TableHead>
+                  <TableHead className="w-[130px]">Prix TTC</TableHead>
+                  <TableHead className="w-[90px]">R %</TableHead>
+                  <TableHead className="w-[140px] text-right">Montant HT</TableHead>
+                  <TableHead className="w-[48px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -590,7 +590,7 @@ export default function DocumentFormPage({ id }: { id?: number }) {
                       <TableCell>
                         <Input
                           {...register(`lines.${idx}.reference`)}
-                          className="h-9"
+                          className="h-11"
                           placeholder="Réf."
                         />
                       </TableCell>
@@ -602,7 +602,7 @@ export default function DocumentFormPage({ id }: { id?: number }) {
                             <button
                               type="button"
                               onClick={() => setDesignEdit({ idx, value: field.value ?? "" })}
-                              className="w-full h-9 px-3 text-left text-sm border border-input rounded-md bg-background hover:bg-muted/50 truncate"
+                              className="w-full h-11 px-3 text-left text-sm border border-input rounded-md bg-background hover:bg-muted/50 truncate"
                               title={field.value || "Cliquer pour saisir la désignation"}
                             >
                               {field.value ? (
@@ -619,18 +619,18 @@ export default function DocumentFormPage({ id }: { id?: number }) {
                           type="number"
                           step="any"
                           {...register(`lines.${idx}.quantite`, { valueAsNumber: true })}
-                          className="h-9 text-right tabular-nums"
+                          className="h-11 text-right tabular-nums"
                         />
                       </TableCell>
                       <TableCell>
-                        <Input {...register(`lines.${idx}.unite`)} className="h-9" />
+                        <Input {...register(`lines.${idx}.unite`)} className="h-11" />
                       </TableCell>
                       <TableCell>
                         <Input
                           type="number"
                           step="any"
                           {...register(`lines.${idx}.prixUnitaire`, { valueAsNumber: true })}
-                          className="h-9 text-right tabular-nums"
+                          className="h-11 text-right tabular-nums"
                         />
                       </TableCell>
                       <TableCell>
@@ -638,7 +638,7 @@ export default function DocumentFormPage({ id }: { id?: number }) {
                           type="number"
                           step="any"
                           {...register(`lines.${idx}.tvaRate`, { valueAsNumber: true })}
-                          className="h-9 text-right tabular-nums"
+                          className="h-11 text-right tabular-nums"
                         />
                       </TableCell>
                       <TableCell>
@@ -659,7 +659,7 @@ export default function DocumentFormPage({ id }: { id?: number }) {
                               { shouldDirty: true },
                             );
                           }}
-                          className="h-9 text-right tabular-nums"
+                          className="h-11 text-right tabular-nums"
                         />
                       </TableCell>
                       <TableCell>
@@ -667,10 +667,10 @@ export default function DocumentFormPage({ id }: { id?: number }) {
                           type="number"
                           step="any"
                           {...register(`lines.${idx}.remisePct`, { valueAsNumber: true })}
-                          className="h-9 text-right tabular-nums"
+                          className="h-11 text-right tabular-nums"
                         />
                       </TableCell>
-                      <TableCell className="text-right tabular-nums font-medium">
+                      <TableCell className="text-right tabular-nums font-medium text-base">
                         {formatMoney(montant)} F
                       </TableCell>
                       <TableCell>
