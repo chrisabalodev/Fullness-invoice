@@ -405,6 +405,7 @@ const PRINT_CSS = `
     border: 1px solid #000;
     border-radius: 8px;
     padding: 6px 10px;
+    margin-top: 8px;
   }
   .client-label { font-weight: 700; font-size: 10pt; }
   .client-name { font-weight: 700; text-transform: uppercase; font-size: 11pt; }
