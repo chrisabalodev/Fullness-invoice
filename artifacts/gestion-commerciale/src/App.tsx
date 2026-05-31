@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Layout } from "@/components/layout";
+import { LicenseGate } from "@/components/license/license-gate";
 
 import Dashboard from "@/pages/dashboard";
 import DocumentsList from "@/pages/documents";
@@ -101,7 +102,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <AppRouter />
+          <LicenseGate>
+            <AppRouter />
+          </LicenseGate>
         </WouterRouter>
         <SonnerToaster position="top-right" richColors />
       </TooltipProvider>
