@@ -7,10 +7,34 @@ export interface LicenseStatus {
   isTrial: boolean;
 }
 
+export type DurationUnit = "minute" | "hour" | "day" | "month" | "year";
+
+export const DURATION_UNITS: { value: DurationUnit; label: string }[] = [
+  { value: "minute", label: "Minute(s)" },
+  { value: "hour", label: "Heure(s)" },
+  { value: "day", label: "Jour(s)" },
+  { value: "month", label: "Mois" },
+  { value: "year", label: "Année(s)" },
+];
+
+export function formatDuration(value: number, unit: string): string {
+  const labels: Record<string, [string, string]> = {
+    minute: ["minute", "minutes"],
+    hour: ["heure", "heures"],
+    day: ["jour", "jours"],
+    month: ["mois", "mois"],
+    year: ["année", "années"],
+  };
+  const pair = labels[unit];
+  if (!pair) return `${value} ${unit}`;
+  return `${value} ${value > 1 ? pair[1] : pair[0]}`;
+}
+
 export interface LicenseKey {
   id: number;
   code: string;
-  months: number;
+  durationValue: number;
+  durationUnit: DurationUnit;
   status: string;
   note: string | null;
   redeemedAt: string | null;
@@ -58,13 +82,14 @@ export async function fetchLicenseKeys(password: string): Promise<LicenseKey[]> 
 
 export async function createLicenseKey(
   password: string,
-  months: number,
+  durationValue: number,
+  durationUnit: DurationUnit,
   note?: string,
 ): Promise<LicenseKey> {
   const r = await fetch(`${BASE}/admin/keys`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-admin-password": password },
-    body: JSON.stringify({ months, note }),
+    body: JSON.stringify({ durationValue, durationUnit, note }),
   });
   const data = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(data.error ?? "Erreur lors de la génération de la clé.");

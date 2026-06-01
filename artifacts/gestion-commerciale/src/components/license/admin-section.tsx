@@ -21,6 +21,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { formatDate } from "@/lib/format";
 import {
   verifyAdminPassword,
@@ -28,6 +35,9 @@ import {
   createLicenseKey,
   changeAdminPassword,
   fetchLicenseStatus,
+  formatDuration,
+  DURATION_UNITS,
+  type DurationUnit,
 } from "@/lib/license-api";
 
 interface Props {
@@ -113,7 +123,8 @@ function AdminPanel({ password, onExit }: { password: string; onExit: () => void
     queryFn: fetchLicenseStatus,
   });
 
-  const [months, setMonths] = useState(12);
+  const [durationValue, setDurationValue] = useState(12);
+  const [durationUnit, setDurationUnit] = useState<DurationUnit>("month");
   const [note, setNote] = useState("");
   const [generating, setGenerating] = useState(false);
   const [lastKey, setLastKey] = useState<string | null>(null);
@@ -123,13 +134,18 @@ function AdminPanel({ password, onExit }: { password: string; onExit: () => void
   const [changing, setChanging] = useState(false);
 
   async function generate() {
-    if (!Number.isInteger(months) || months < 1 || months > 120) {
-      toast.error("Le nombre de mois doit être entre 1 et 120.");
+    if (!Number.isInteger(durationValue) || durationValue < 1 || durationValue > 100_000) {
+      toast.error("La durée doit être un entier entre 1 et 100000.");
       return;
     }
     setGenerating(true);
     try {
-      const key = await createLicenseKey(password, months, note || undefined);
+      const key = await createLicenseKey(
+        password,
+        durationValue,
+        durationUnit,
+        note || undefined,
+      );
       setLastKey(key.code);
       setNote("");
       toast.success("Clé de licence générée.");
@@ -215,23 +231,41 @@ function AdminPanel({ password, onExit }: { password: string; onExit: () => void
               <Plus className="h-4 w-4" /> Générer une clé de licence
             </CardTitle>
             <CardDescription>
-              Choisissez la durée en mois. La clé pourra être utilisée pour activer ou prolonger
-              l'application.
+              Choisissez la durée (minute, heure, jour, mois ou année). La clé pourra être
+              utilisée pour activer ou prolonger l'application.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap items-end gap-4">
               <div className="space-y-2">
-                <Label htmlFor="months">Nombre de mois</Label>
+                <Label htmlFor="duration-value">Durée</Label>
                 <Input
-                  id="months"
+                  id="duration-value"
                   type="number"
                   min={1}
-                  max={120}
-                  value={months}
-                  onChange={(e) => setMonths(Number(e.target.value))}
-                  className="w-32"
+                  max={100000}
+                  value={durationValue}
+                  onChange={(e) => setDurationValue(Number(e.target.value))}
+                  className="w-28"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="duration-unit">Unité</Label>
+                <Select
+                  value={durationUnit}
+                  onValueChange={(v) => setDurationUnit(v as DurationUnit)}
+                >
+                  <SelectTrigger id="duration-unit" className="w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DURATION_UNITS.map((u) => (
+                      <SelectItem key={u.value} value={u.value}>
+                        {u.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2 flex-1 min-w-48">
                 <Label htmlFor="note">Note (facultatif)</Label>
@@ -280,7 +314,7 @@ function AdminPanel({ password, onExit }: { password: string; onExit: () => void
                 <TableHeader>
                   <TableRow>
                     <TableHead>Clé</TableHead>
-                    <TableHead>Mois</TableHead>
+                    <TableHead>Durée</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Note</TableHead>
                     <TableHead>Créée le</TableHead>
@@ -292,7 +326,7 @@ function AdminPanel({ password, onExit }: { password: string; onExit: () => void
                   {keys.map((k) => (
                     <TableRow key={k.id}>
                       <TableCell className="font-mono">{k.code}</TableCell>
-                      <TableCell>{k.months}</TableCell>
+                      <TableCell>{formatDuration(k.durationValue, k.durationUnit)}</TableCell>
                       <TableCell>
                         <Badge variant={k.status === "used" ? "secondary" : "default"}>
                           {k.status === "used" ? "Utilisée" : "Disponible"}

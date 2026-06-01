@@ -31,6 +31,30 @@ function addMonths(date: Date, months: number): Date {
   return d;
 }
 
+const DURATION_UNITS = ["minute", "hour", "day", "month", "year"] as const;
+type DurationUnit = (typeof DURATION_UNITS)[number];
+
+function isDurationUnit(value: unknown): value is DurationUnit {
+  return typeof value === "string" && (DURATION_UNITS as readonly string[]).includes(value);
+}
+
+// Add a quantity of a given unit to a date. Minute/hour/day use exact
+// millisecond math; month/year use calendar-aware addition.
+function addDuration(date: Date, value: number, unit: DurationUnit): Date {
+  switch (unit) {
+    case "minute":
+      return new Date(date.getTime() + value * 60_000);
+    case "hour":
+      return new Date(date.getTime() + value * 3_600_000);
+    case "day":
+      return new Date(date.getTime() + value * 86_400_000);
+    case "month":
+      return addMonths(date, value);
+    case "year":
+      return addMonths(date, value * 12);
+  }
+}
+
 function generateCode(): string {
   const raw = crypto.randomBytes(8).toString("hex").toUpperCase();
   return raw.match(/.{1,4}/g)!.join("-");
@@ -78,7 +102,8 @@ function serializeKey(row: typeof licenseKeysTable.$inferSelect) {
   return {
     id: row.id,
     code: row.code,
-    months: row.months,
+    durationValue: row.durationValue,
+    durationUnit: row.durationUnit,
     status: row.status,
     note: row.note ?? null,
     redeemedAt: row.redeemedAt ? new Date(row.redeemedAt).toISOString() : null,
@@ -126,7 +151,10 @@ router.post("/license/redeem", async (req, res): Promise<void> => {
       new Date(current.expiresAt).getTime() > now.getTime()
         ? new Date(current.expiresAt)
         : now;
-    const newExpiry = addMonths(base, key.months);
+    const unit: DurationUnit = isDurationUnit(key.durationUnit)
+      ? key.durationUnit
+      : "month";
+    const newExpiry = addDuration(base, key.durationValue, unit);
 
     const marked = await tx
       .update(licenseKeysTable)
@@ -140,7 +168,7 @@ router.post("/license/redeem", async (req, res): Promise<void> => {
       .set({ expiresAt: newExpiry, isTrial: false })
       .where(eq(licenseTable.id, current.id))
       .returning();
-    return { row: row!, months: key.months };
+    return { row: row!, durationValue: key.durationValue, durationUnit: unit };
   });
 
   if (!updated) {
@@ -148,7 +176,10 @@ router.post("/license/redeem", async (req, res): Promise<void> => {
     return;
   }
 
-  req.log.info({ months: updated.months }, "license key redeemed");
+  req.log.info(
+    { durationValue: updated.durationValue, durationUnit: updated.durationUnit },
+    "license key redeemed",
+  );
   res.json({ success: true, ...statusPayload(updated.row) });
 });
 
@@ -183,11 +214,16 @@ router.get("/license/admin/keys", requireAdmin, async (_req, res): Promise<void>
   res.json(keys.map(serializeKey));
 });
 
-// Admin: generate a new license key for a chosen number of months.
+// Admin: generate a new license key for a chosen duration (value + unit).
 router.post("/license/admin/keys", requireAdmin, async (req, res): Promise<void> => {
-  const months = Number(req.body?.months);
-  if (!Number.isInteger(months) || months < 1 || months > 120) {
-    res.status(400).json({ error: "Le nombre de mois doit être un entier entre 1 et 120." });
+  const value = Number(req.body?.durationValue);
+  const unit = req.body?.durationUnit;
+  if (!Number.isInteger(value) || value < 1 || value > 100_000) {
+    res.status(400).json({ error: "La durée doit être un entier entre 1 et 100000." });
+    return;
+  }
+  if (!isDurationUnit(unit)) {
+    res.status(400).json({ error: "Unité de durée invalide." });
     return;
   }
   const note = typeof req.body?.note === "string" ? req.body.note.trim() : "";
@@ -197,7 +233,7 @@ router.post("/license/admin/keys", requireAdmin, async (req, res): Promise<void>
     try {
       const [row] = await db
         .insert(licenseKeysTable)
-        .values({ code: generateCode(), months, note: note || null })
+        .values({ code: generateCode(), durationValue: value, durationUnit: unit, note: note || null })
         .returning();
       created = row;
     } catch {
@@ -210,7 +246,7 @@ router.post("/license/admin/keys", requireAdmin, async (req, res): Promise<void>
     return;
   }
 
-  req.log.info({ months }, "license key generated");
+  req.log.info({ durationValue: value, durationUnit: unit }, "license key generated");
   res.json(serializeKey(created));
 });
 
