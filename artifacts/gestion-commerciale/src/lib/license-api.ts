@@ -96,6 +96,17 @@ export async function createLicenseKey(
   return data;
 }
 
+export async function disableTrial(password: string): Promise<void> {
+  const r = await fetch(`${BASE}/admin/disable-trial`, {
+    method: "POST",
+    headers: { "x-admin-password": password },
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok || !data.success) {
+    throw new Error(data.error ?? "Erreur lors de la désactivation du mode essai.");
+  }
+}
+
 export async function changeAdminPassword(
   password: string,
   newPassword: string,

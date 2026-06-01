@@ -250,6 +250,20 @@ router.post("/license/admin/keys", requireAdmin, async (req, res): Promise<void>
   res.json(serializeKey(created));
 });
 
+// Admin: disable the 30-day trial / TEST mode immediately. Sets the license to
+// expired so the app is blocked at once and a license key is required to use it.
+router.post("/license/admin/disable-trial", requireAdmin, async (req, res): Promise<void> => {
+  const lic = await getOrCreateLicense();
+  // Backdate the expiry so the license is unambiguously expired right away.
+  const expired = new Date(Date.now() - 1000);
+  await db
+    .update(licenseTable)
+    .set({ expiresAt: expired, isTrial: false })
+    .where(eq(licenseTable.id, lic.id));
+  req.log.info("trial disabled by admin");
+  res.json({ success: true });
+});
+
 // Admin: change the admin password.
 router.post("/license/admin/password", requireAdmin, async (req, res): Promise<void> => {
   const newPassword = typeof req.body?.newPassword === "string" ? req.body.newPassword : "";

@@ -1,7 +1,16 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, KeyRound, Plus, Copy, ShieldCheck, Lock, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  KeyRound,
+  Plus,
+  Copy,
+  ShieldCheck,
+  Lock,
+  Loader2,
+  Power,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +37,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { formatDate } from "@/lib/format";
 import {
   verifyAdminPassword,
@@ -35,6 +55,7 @@ import {
   createLicenseKey,
   changeAdminPassword,
   fetchLicenseStatus,
+  disableTrial,
   formatDuration,
   DURATION_UNITS,
   type DurationUnit,
@@ -132,6 +153,7 @@ function AdminPanel({ password, onExit }: { password: string; onExit: () => void
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [changing, setChanging] = useState(false);
+  const [disabling, setDisabling] = useState(false);
 
   async function generate() {
     if (!Number.isInteger(durationValue) || durationValue < 1 || durationValue > 100_000) {
@@ -160,6 +182,19 @@ function AdminPanel({ password, onExit }: { password: string; onExit: () => void
   function copy(code: string) {
     void navigator.clipboard.writeText(code);
     toast.success("Clé copiée.");
+  }
+
+  async function disableTrialNow() {
+    setDisabling(true);
+    try {
+      await disableTrial(password);
+      toast.success("Mode essai désactivé. L'application est maintenant bloquée.");
+      qc.invalidateQueries({ queryKey: ["license", "status"] });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erreur.");
+    } finally {
+      setDisabling(false);
+    }
   }
 
   async function changePw() {
@@ -347,6 +382,50 @@ function AdminPanel({ password, onExit }: { password: string; onExit: () => void
                 </TableBody>
               </Table>
             )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-destructive/40">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Power className="h-4 w-4 text-destructive" /> Désactiver le mode essai (30 jours)
+            </CardTitle>
+            <CardDescription>
+              Coupe immédiatement la période d'essai : l'application se bloque aussitôt et exige
+              une clé de licence valide pour fonctionner. Générez d'abord une clé si nécessaire.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" disabled={disabling || status?.expired}>
+                  {disabling ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Power className="h-4 w-4" />
+                  )}
+                  {status?.expired ? "Essai déjà désactivé" : "Désactiver le mode essai"}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Désactiver le mode essai ?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    L'application sera bloquée immédiatement et ne pourra être utilisée qu'avec
+                    une clé de licence valide. Cette action est irréversible sans clé.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Annuler</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={disableTrialNow}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Désactiver
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </CardContent>
         </Card>
 

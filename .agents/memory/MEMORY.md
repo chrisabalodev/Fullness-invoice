@@ -4,3 +4,4 @@
 - [lib project-references rebuild](lib-project-references-rebuild.md) — new export in a `lib/*` pkg fails artifact typecheck (TS2724/2305) until `typecheck:libs` rebuilds dist d.ts; artifacts read dist, not src.
 - [canvas effect deps vs multiple queries](canvas-effect-deps-multiple-queries.md) — imperative draw into a ref'd node gated by N async values must list ALL N in effect deps, else intermittent no-draw.
 - [drizzle push interactive rename](drizzle-push-interactive-rename.md) — push/push-force hangs on column drop+add rename prompt; apply ALTER TABLE via psql for empty tables instead.
+- [license admin recovery when expired](license-admin-recovery-when-expired.md) — admin access/routes intentionally reachable when expired (recovery path); don't gate them behind expiry or it bricks the app.

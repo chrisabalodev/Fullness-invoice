@@ -41,7 +41,7 @@ French-language commercial management web app for a Togo wholesale company. All 
 - **Clients** — CRUD with detail page (history of documents)
 - **Articles** — CRUD with stock + pricing + detail page
 - **Paramètres** — Company info, comptoir, bank accounts, TVA rate, default vendor
-- **Licence / activation** — Startup landing (2 choices: "Gestion commerciale / Comptoir" and password-protected "Administration"). First launch = 30-day trial; when expired the app is fully blocked (frontend gate + server-side `licenseGuard` returning 403 on business routes) and only the key-unlock screen is reachable. Admin (initial password `fullness@`, hashed, changeable) generates license keys for a chosen duration (value + unit: minute, hour, day, month or year); redeeming a valid key extends expiry and is independent (no admin login). Print route is also blocked when expired.
+- **Licence / activation** — Startup landing (2 choices: "Gestion commerciale / Comptoir" and password-protected "Administration"). First launch = 30-day trial; when expired the app is fully blocked (frontend gate + server-side `licenseGuard` returning 403 on business routes) and only the key-unlock screen is reachable. Admin (initial password `fullness@`, hashed, changeable) generates license keys for a chosen duration (value + unit: minute, hour, day, month or year) and can disable the 30-day trial immediately (backdates expiry → app blocks at once, requires a key); redeeming a valid key extends expiry and is independent (no admin login). Print route is also blocked when expired.
 
 ### Print view (`/documents/:id/print`)
 Faithful reproduction of the STE LE WATT layout (reference: `attached_assets/WhatsApp_Image_2026-04-23_at_14.25.18_1777374944854.jpeg`):
