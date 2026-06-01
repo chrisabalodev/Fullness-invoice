@@ -318,14 +318,14 @@ export default function DocumentPrintPage({ id }: { id: number }) {
 }
 
 const PRINT_CSS = `
-  @page { size: A4; margin: 18mm; }
+  @page { size: A4; margin: 8mm; }
   html, body { background: #f3f3f3; margin: 0; padding: 0; }
   .print-page {
     background: #fff;
     color: #000;
     width: 210mm;
     min-height: 297mm;
-    padding: 18mm;
+    padding: 8mm;
     margin: 16px auto;
     box-sizing: border-box;
     font-family: Arial, Helvetica, sans-serif;
