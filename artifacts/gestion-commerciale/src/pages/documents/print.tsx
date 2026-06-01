@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import JsBarcode from "jsbarcode";
 import {
   useGetDocument,
@@ -16,7 +16,11 @@ export default function DocumentPrintPage({ id }: { id: number }) {
   const [copyLabel, setCopyLabel] = useState("ORIGINAL");
 
   useLayoutEffect(() => {
-    if (doc && barcodeRef.current) {
+    // The <canvas> only mounts once BOTH doc and company are loaded, so the
+    // effect must depend on company too — otherwise, if company resolves after
+    // doc, the canvas appears but this effect never re-runs and the barcode is
+    // never drawn.
+    if (doc && company && barcodeRef.current) {
       try {
         JsBarcode(barcodeRef.current, doc.numero, {
           format: "CODE128",
@@ -31,9 +35,7 @@ export default function DocumentPrintPage({ id }: { id: number }) {
         /* ignore */
       }
     }
-  }, [doc]);
-
-  useEffect(() => {}, [doc, company]);
+  }, [doc, company]);
 
   if (!doc || !company) {
     return <p style={{ padding: 20 }}>Chargement…</p>;

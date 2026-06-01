@@ -2,3 +2,4 @@
 - [RHF duplicate register across responsive views](rhf-responsive-duplicate-register.md) — two CSS-toggled layouts both mounting `register("name")` freeze uncontrolled inputs; render one view at a time with `useIsMobile()`.
 - [Data backup/import/reset](data-backup-import.md) — JSON full-table backup: revive timestamp strings to Date, realign sequences with 3-arg setval, guard destructive import with version + non-empty company.
 - [lib project-references rebuild](lib-project-references-rebuild.md) — new export in a `lib/*` pkg fails artifact typecheck (TS2724/2305) until `typecheck:libs` rebuilds dist d.ts; artifacts read dist, not src.
+- [canvas effect deps vs multiple queries](canvas-effect-deps-multiple-queries.md) — imperative draw into a ref'd node gated by N async values must list ALL N in effect deps, else intermittent no-draw.
